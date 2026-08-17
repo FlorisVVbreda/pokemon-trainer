@@ -369,11 +369,12 @@ function ivRow(label, cap, ivs) {
   return `<div class="info-row"><span>${label}</span><b>Level ${level} · Aanval ${atk} / Verdediging ${def} / Uith. ${hp}</b></div>`;
 }
 
-function showDetail(id) {
+function renderDetail(id) {
   const raw = byId.get(id);
   const target = poke(raw);
 
   pickerView.classList.add("hidden");
+  battleView.classList.add("hidden");
   detailView.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 
@@ -479,12 +480,10 @@ function showDetail(id) {
 
 const battleView = document.getElementById("battle-view");
 const battleBackBtn = document.getElementById("battle-back-btn");
-let battleReturnTarget = null;
 
-function showBattlePlan(candId, targetId) {
+function renderBattle(candId, targetId) {
   const cand = poke(byId.get(candId));
   const target = poke(byId.get(targetId));
-  battleReturnTarget = targetId;
 
   detailView.classList.add("hidden");
   pickerView.classList.add("hidden");
@@ -517,19 +516,40 @@ function showBattlePlan(candId, targetId) {
     `<div class="info-flavor">Voor Raids maakt het niveau niet uit voor de CP-limiet — kies altijd de hoogst mogelijke IV's en level.</div>`;
 }
 
-battleBackBtn.addEventListener("click", () => {
-  battleView.classList.add("hidden");
-  if (battleReturnTarget != null) {
-    showDetail(battleReturnTarget);
-  } else {
-    pickerView.classList.remove("hidden");
-  }
-});
-
-backBtn.addEventListener("click", () => {
+// ---------------------------------------------------------------------
+// Navigatie via de History API: elke stap (overzicht -> detail ->
+// gevechtsplan) is een eigen history-entry, zodat de terug-swipe op
+// telefoons (en de browser-terugknop) een stap terug doet in de app
+// in plaats van de app/pagina te verlaten.
+// ---------------------------------------------------------------------
+function renderPicker() {
   detailView.classList.add("hidden");
+  battleView.classList.add("hidden");
   pickerView.classList.remove("hidden");
-});
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function applyState(state) {
+  if (!state || state.view === "picker") renderPicker();
+  else if (state.view === "detail") renderDetail(state.id);
+  else if (state.view === "battle") renderBattle(state.candId, state.targetId);
+}
+
+function showDetail(id) {
+  history.pushState({ view: "detail", id }, "", `#${id}`);
+  renderDetail(id);
+}
+
+function showBattlePlan(candId, targetId) {
+  history.pushState({ view: "battle", candId, targetId }, "", `#battle-${candId}-${targetId}`);
+  renderBattle(candId, targetId);
+}
+
+window.addEventListener("popstate", (e) => applyState(e.state));
+history.replaceState({ view: "picker" }, "", location.pathname + location.search);
+
+battleBackBtn.addEventListener("click", () => history.back());
+backBtn.addEventListener("click", () => history.back());
 
 searchInput.addEventListener("input", renderGrid);
 
