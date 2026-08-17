@@ -1,5 +1,5 @@
-const SHELL_CACHE = "poketrainer-shell-v4-go";
-const SPRITE_CACHE = "poketrainer-sprites-v1";
+const SHELL_CACHE = "poketrainer-shell-v5-go";
+const SPRITE_CACHE = "poketrainer-sprites-v2";
 
 const SHELL_FILES = [
   "./",
@@ -37,7 +37,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
   // Pokemon sprite artwork: cache-first, store on first view for offline reuse
-  if (url.hostname === "raw.githubusercontent.com") {
+  if (url.hostname === "cdn.jsdelivr.net") {
     event.respondWith(
       caches.open(SPRITE_CACHE).then(async (cache) => {
         const cached = await cache.match(event.request);

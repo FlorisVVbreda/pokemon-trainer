@@ -85,9 +85,9 @@ function typeMultiplier(atkIdx, defIdxs) {
 // Data helpers
 // ---------------------------------------------------------------------
 const spriteUrl = (id) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+  `https://cdn.jsdelivr.net/gh/PokeAPI/sprites/sprites/pokemon/other/official-artwork/${id}.png`;
 const spriteFallback = (id) =>
-  `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+  `https://cdn.jsdelivr.net/gh/PokeAPI/sprites/sprites/pokemon/${id}.png`;
 
 const byId = new Map(); // speciesId -> raw row
 const byDexFirst = new Map(); // dex -> first raw row (for evolution lookups)
@@ -163,6 +163,34 @@ function bestMoves(cand, defTypes, atkStat) {
     .map((i) => scoredMove(moveInfo(i), cand.types, defTypes, atkStat))
     .sort((a, b) => b.score - a.score);
   return { fast, charged };
+}
+
+// Losse groepen (gewone TM vs Elite TM) zodat spelers zonder Elite TM ook een goede optie zien.
+// Elite-status is per Pokémon (dezelfde move kan bij het ene Pokémon gewoon en bij het andere
+// Elite-only zijn), dus geven we die expliciet mee in plaats van te vertrouwen op de globale set.
+function groupedMoves(cand, defTypes, atkStat) {
+  const rank = (idxs, isElite) => idxs
+    .map((i) => scoredMove(moveInfo(i, isElite), cand.types, defTypes, atkStat))
+    .sort((a, b) => b.score - a.score);
+  return {
+    fastNormal: rank(cand.fastNormal, false),
+    fastElite: rank(cand.fastElite, true),
+    chargedNormal: rank(cand.chargedNormal, false),
+    chargedElite: rank(cand.chargedElite, true),
+  };
+}
+
+function moveGroupsHtml(groups, { showMult } = {}) {
+  const sections = [
+    ["Beste Snelle aanval — gewone TM", groups.fastNormal.slice(0, 1)],
+    ["Beste Snelle aanval — Elite TM", groups.fastElite.slice(0, 1)],
+    ["Beste Speciale aanvallen — gewone TM", groups.chargedNormal.slice(0, 2)],
+    ["Beste Speciale aanvallen — Elite TM", groups.chargedElite.slice(0, 2)],
+  ].filter(([, moves]) => moves.length > 0);
+  if (sections.length === 0) return `<div class="empty-msg">Geen aanvallen gevonden.</div>`;
+  return sections
+    .map(([title, moves]) => `<div class="move-group-title">${title}</div>` + moves.map((m) => moveRow(m, { showMult })).join(""))
+    .join("");
 }
 
 function tmChip(m) {
@@ -381,12 +409,7 @@ function showDetail(id) {
     `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>`;
   document.getElementById("location-list").innerHTML = ivHtml;
 
-  const { fast, charged } = bestMoves(target, null, target.atk);
-  const ownMoves = [...fast.slice(0, 2), ...charged.slice(0, 3)];
-  const ownMovesEl = document.getElementById("own-moves-list");
-  ownMovesEl.innerHTML = ownMoves.length
-    ? ownMoves.map((m) => moveRow(m)).join("")
-    : `<div class="empty-msg">Geen aanvallen gevonden.</div>`;
+  document.getElementById("own-moves-list").innerHTML = moveGroupsHtml(groupedMoves(target, null, target.atk));
 
   const weakList = document.getElementById("weakness-list");
   const weaknesses = weaknessesOf(target);
@@ -480,12 +503,8 @@ function showBattlePlan(candId, targetId) {
   target.types.forEach((t) => targetTypesEl.appendChild(typeBadge(t)));
 
   document.getElementById("battle-moves-title").textContent = `Beste aanvallen om ${target.name} te verslaan`;
-  const { fast, charged } = bestMoves(cand, target.types, cand.atk);
-  const moves = [...fast.slice(0, 1), ...charged.slice(0, 3)];
-  const movesEl = document.getElementById("battle-moves-list");
-  movesEl.innerHTML = moves.length
-    ? moves.map((m) => moveRow(m, { showMult: true })).join("")
-    : `<div class="empty-msg">Geen effectieve aanvallen gevonden.</div>`;
+  document.getElementById("battle-moves-list").innerHTML =
+    moveGroupsHtml(groupedMoves(cand, target.types, cand.atk), { showMult: true });
 
   document.getElementById("battle-iv-panel").innerHTML =
     ivRow("Little League (CP500)", 500, cand.ivCp500) +
