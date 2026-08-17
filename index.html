@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0">
+<title>Pokémon Trainer</title>
+
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f1220">
+
+<link rel="icon" href="icons/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="icon" href="icons/favicon-16.png" sizes="16x16" type="image/png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PokéTrainer">
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <h1><span class="logo-ball"></span> Pokémon Trainer</h1>
+  <p class="subtitle">Kies een Pokémon en ontdek waarmee je hem verslaat</p>
+</header>
+
+<main>
+  <section id="picker-view" class="view">
+    <div class="picker-controls">
+      <input id="search" type="search" placeholder="Zoek een Pokémon op naam of nummer…" autocomplete="off">
+      <div class="type-filters" id="type-filters"></div>
+    </div>
+    <div id="poke-grid" class="poke-grid"></div>
+  </section>
+
+  <section id="detail-view" class="view hidden">
+    <button id="back-btn" class="back-btn">← Terug naar overzicht</button>
+
+    <div class="target-card">
+      <img id="target-img" class="target-img" alt="">
+      <div class="target-info">
+        <h2 id="target-name"></h2>
+        <div id="target-types" class="type-badges"></div>
+        <div id="target-stats" class="stat-bars"></div>
+      </div>
+    </div>
+
+    <div class="results-grid">
+      <div class="panel">
+        <h3>Sterke aanvalstypes tegen deze Pokémon</h3>
+        <div id="weakness-list" class="weakness-list"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Beste Pokémon om hem te verslaan</h3>
+        <div id="counter-list" class="counter-list"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <p>Data via <a href="https://pokeapi.co" target="_blank" rel="noopener">PokéAPI</a>. Alle Pokémon-namen en afbeeldingen zijn eigendom van Nintendo/Game Freak.</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
