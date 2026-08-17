@@ -1,7 +1,7 @@
 {
-  "name": "Pokémon Trainer",
-  "short_name": "PokéTrainer",
-  "description": "Zoek een Pokémon op en ontdek welke Pokémon en moves het beste zijn om hem te verslaan.",
+  "name": "Pokémon GO Trainer",
+  "short_name": "GO Trainer",
+  "description": "Zoek een Pokémon GO-Pokémon op en ontdek de beste tegenstanders en aanvallen voor Raids en Battles.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

@@ -1,80 +1,84 @@
 // ---------------------------------------------------------------------
-// Type-effectiviteitstabel (aanvallend type -> verdedigend type)
-// Indices komen overeen met de TYPES-array in data.js
+// Pokémon GO type-effectiviteit (aanvallend type -> verdedigend type)
+// GO gebruikt geen immuniteiten: alles is 1.6x (super effectief),
+// 1x (normaal) of 0.625x (niet effectief, ook waar de hoofdgames 0x geven)
 // ---------------------------------------------------------------------
 const N = TYPES.length;
 const CHART = Array.from({ length: N }, () => new Array(N).fill(1));
+const GO_SUPER = 1.6;
+const GO_RESIST = 0.625;
+const GO_STAB = 1.2;
 
 function setFx(atk, defs, mult) {
   const a = TYPES.indexOf(atk);
   for (const d of defs) CHART[a][TYPES.indexOf(d)] = mult;
 }
 
-setFx("normal", ["rock", "steel"], 0.5);
-setFx("normal", ["ghost"], 0);
+setFx("normal", ["rock", "steel"], GO_RESIST);
+setFx("normal", ["ghost"], GO_RESIST);
 
-setFx("fire", ["fire", "water", "rock", "dragon"], 0.5);
-setFx("fire", ["grass", "ice", "bug", "steel"], 2);
+setFx("fire", ["fire", "water", "rock", "dragon"], GO_RESIST);
+setFx("fire", ["grass", "ice", "bug", "steel"], GO_SUPER);
 
-setFx("water", ["water", "grass", "dragon"], 0.5);
-setFx("water", ["fire", "ground", "rock"], 2);
+setFx("water", ["water", "grass", "dragon"], GO_RESIST);
+setFx("water", ["fire", "ground", "rock"], GO_SUPER);
 
-setFx("electric", ["electric", "grass", "dragon"], 0.5);
-setFx("electric", ["ground"], 0);
-setFx("electric", ["water", "flying"], 2);
+setFx("electric", ["electric", "grass", "dragon"], GO_RESIST);
+setFx("electric", ["ground"], GO_RESIST);
+setFx("electric", ["water", "flying"], GO_SUPER);
 
-setFx("grass", ["fire", "grass", "poison", "flying", "bug", "dragon", "steel"], 0.5);
-setFx("grass", ["water", "ground", "rock"], 2);
+setFx("grass", ["fire", "grass", "poison", "flying", "bug", "dragon", "steel"], GO_RESIST);
+setFx("grass", ["water", "ground", "rock"], GO_SUPER);
 
-setFx("ice", ["fire", "water", "ice", "steel"], 0.5);
-setFx("ice", ["grass", "ground", "flying", "dragon"], 2);
+setFx("ice", ["fire", "water", "ice", "steel"], GO_RESIST);
+setFx("ice", ["grass", "ground", "flying", "dragon"], GO_SUPER);
 
-setFx("fighting", ["poison", "flying", "psychic", "bug", "fairy"], 0.5);
-setFx("fighting", ["ghost"], 0);
-setFx("fighting", ["normal", "ice", "rock", "dark", "steel"], 2);
+setFx("fighting", ["poison", "flying", "psychic", "bug", "fairy"], GO_RESIST);
+setFx("fighting", ["ghost"], GO_RESIST);
+setFx("fighting", ["normal", "ice", "rock", "dark", "steel"], GO_SUPER);
 
-setFx("poison", ["poison", "ground", "rock", "ghost"], 0.5);
-setFx("poison", ["steel"], 0);
-setFx("poison", ["grass", "fairy"], 2);
+setFx("poison", ["poison", "ground", "rock", "ghost"], GO_RESIST);
+setFx("poison", ["steel"], GO_RESIST);
+setFx("poison", ["grass", "fairy"], GO_SUPER);
 
-setFx("ground", ["grass", "bug"], 0.5);
-setFx("ground", ["flying"], 0);
-setFx("ground", ["fire", "electric", "poison", "rock", "steel"], 2);
+setFx("ground", ["grass", "bug"], GO_RESIST);
+setFx("ground", ["flying"], GO_RESIST);
+setFx("ground", ["fire", "electric", "poison", "rock", "steel"], GO_SUPER);
 
-setFx("flying", ["electric", "rock", "steel"], 0.5);
-setFx("flying", ["grass", "fighting", "bug"], 2);
+setFx("flying", ["electric", "rock", "steel"], GO_RESIST);
+setFx("flying", ["grass", "fighting", "bug"], GO_SUPER);
 
-setFx("psychic", ["psychic", "steel"], 0.5);
-setFx("psychic", ["dark"], 0);
-setFx("psychic", ["fighting", "poison"], 2);
+setFx("psychic", ["psychic", "steel"], GO_RESIST);
+setFx("psychic", ["dark"], GO_RESIST);
+setFx("psychic", ["fighting", "poison"], GO_SUPER);
 
-setFx("bug", ["fire", "fighting", "poison", "flying", "ghost", "steel", "fairy"], 0.5);
-setFx("bug", ["grass", "psychic", "dark"], 2);
+setFx("bug", ["fire", "fighting", "poison", "flying", "ghost", "steel", "fairy"], GO_RESIST);
+setFx("bug", ["grass", "psychic", "dark"], GO_SUPER);
 
-setFx("rock", ["fighting", "ground", "steel"], 0.5);
-setFx("rock", ["fire", "ice", "flying", "bug"], 2);
+setFx("rock", ["fighting", "ground", "steel"], GO_RESIST);
+setFx("rock", ["fire", "ice", "flying", "bug"], GO_SUPER);
 
-setFx("ghost", ["dark"], 0.5);
-setFx("ghost", ["normal"], 0);
-setFx("ghost", ["psychic", "ghost"], 2);
+setFx("ghost", ["dark"], GO_RESIST);
+setFx("ghost", ["normal"], GO_RESIST);
+setFx("ghost", ["psychic", "ghost"], GO_SUPER);
 
-setFx("dragon", ["steel"], 0.5);
-setFx("dragon", ["fairy"], 0);
-setFx("dragon", ["dragon"], 2);
+setFx("dragon", ["steel"], GO_RESIST);
+setFx("dragon", ["fairy"], GO_RESIST);
+setFx("dragon", ["dragon"], GO_SUPER);
 
-setFx("dark", ["fighting", "dark", "fairy"], 0.5);
-setFx("dark", ["psychic", "ghost"], 2);
+setFx("dark", ["fighting", "dark", "fairy"], GO_RESIST);
+setFx("dark", ["psychic", "ghost"], GO_SUPER);
 
-setFx("steel", ["fire", "water", "electric", "steel"], 0.5);
-setFx("steel", ["ice", "rock", "fairy"], 2);
+setFx("steel", ["fire", "water", "electric", "steel"], GO_RESIST);
+setFx("steel", ["ice", "rock", "fairy"], GO_SUPER);
 
-setFx("fairy", ["fire", "poison", "steel"], 0.5);
-setFx("fairy", ["fighting", "dragon", "dark"], 2);
+setFx("fairy", ["fire", "poison", "steel"], GO_RESIST);
+setFx("fairy", ["fighting", "dragon", "dark"], GO_SUPER);
 
 function typeMultiplier(atkIdx, defIdxs) {
   let m = 1;
   for (const d of defIdxs) m *= CHART[atkIdx][d];
-  return m;
+  return Math.round(m * 10000) / 10000;
 }
 
 // ---------------------------------------------------------------------
@@ -85,117 +89,130 @@ const spriteUrl = (id) =>
 const spriteFallback = (id) =>
   `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 
-const byId = new Map();
-for (const p of POKEMON) byId.set(p[0], p);
+const byId = new Map(); // speciesId -> raw row
+const byDexFirst = new Map(); // dex -> first raw row (for evolution lookups)
+for (const p of POKEMON) {
+  byId.set(p[1], p);
+  if (!byDexFirst.has(p[0])) byDexFirst.set(p[0], p);
+}
 
 function poke(p) {
   return {
-    id: p[0], name: p[1], types: p[2],
-    hp: p[3][0], atk: p[3][1], def: p[3][2], spa: p[3][3], spd: p[3][4], spe: p[3][5],
-    moves: p[4],
-    variant: p[5], baseDex: p[6],
-    genus: p[7], flavor: p[8],
-    height: p[9], weight: p[10],
-    abilities: p[11], evolvesFrom: p[12], locations: p[13], rarity: p[14],
+    dex: p[0], id: p[1], name: p[2], types: p[3],
+    atk: p[4], def: p[5], hp: p[6],
+    fastNormal: p[7], fastElite: p[8], chargedNormal: p[9], chargedElite: p[10],
+    tags: p[11],
+    ivCp500: p[12], ivCp1500: p[13], ivCp2500: p[14],
+    parent: p[15], buddyDistance: p[16], spriteId: p[17],
   };
 }
 
-function moveInfo(i) {
+const FAST_SET = new Set();
+const ELITE_FAST_SET = new Set();
+const CHARGED_SET = new Set();
+const ELITE_CHARGED_SET = new Set();
+for (const p of POKEMON) {
+  p[7].forEach((i) => FAST_SET.add(i));
+  p[8].forEach((i) => ELITE_FAST_SET.add(i));
+  p[9].forEach((i) => CHARGED_SET.add(i));
+  p[10].forEach((i) => ELITE_CHARGED_SET.add(i));
+}
+
+function moveInfo(i, eliteOverride) {
   const m = MOVES[i];
-  return { name: m[0], type: m[1], power: m[2], acc: m[3], cls: m[4], tm: m[5] };
+  return {
+    idx: i, name: m[0], type: m[1], power: m[2], value: m[3], turns: m[4],
+    isFast: m[5] === 1,
+    elite: eliteOverride !== undefined ? eliteOverride : (m[5] === 1 ? ELITE_FAST_SET.has(i) : ELITE_CHARGED_SET.has(i)),
+  };
 }
 
 const TYPE_LABEL = (i) => TYPES[i][0].toUpperCase() + TYPES[i].slice(1);
+const titleCase = (s) => s.split(/[-_]/).map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
 
-const titleCase = (s) => s.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+const TAG_LABEL = {
+  legendary: "Legendarisch", mythical: "Mythisch", mega: "Mega", primal: "Primal",
+  ultrabeast: "Ultrabeest", shadoweligible: "Shadow-geschikt",
+  alolan: "Regionale vorm (Alola)", galarian: "Regionale vorm (Galar)",
+  hisuian: "Regionale vorm (Hisui)", paldean: "Regionale vorm (Paldea)",
+  regional: "Regionaal exclusief",
+};
+const TAG_CLASS = {
+  legendary: "tag-legendary", mythical: "tag-mythical",
+  mega: "tag-mega", primal: "tag-primal",
+};
 
-const VARIANT_TAG = { 1: "Mega", 2: "Mega", 3: "Mega", 4: "Primal" };
-const VARIANT_SUFFIX = { 2: " X", 3: " Y" };
-
-function displayName(p) {
-  const variant = p.variant ?? 0;
-  if (!variant) return titleCase(p.name);
-  const suffix = { 1: "-mega", 2: "-mega-x", 3: "-mega-y", 4: "-primal" }[variant];
-  const base = titleCase(p.name.slice(0, -suffix.length));
-  return `${VARIANT_TAG[variant]} ${base}${VARIANT_SUFFIX[variant] || ""}`;
+// ---------------------------------------------------------------------
+// Move scoring
+// ---------------------------------------------------------------------
+function scoredMove(m, ownTypes, defTypes, atkStat) {
+  const mult = defTypes ? typeMultiplier(m.type, defTypes) : 1;
+  const stab = ownTypes.includes(m.type) ? GO_STAB : 1;
+  const dpt = (m.power * mult * stab) / m.turns; // schade per beurt (~0.5s)
+  const epRatio = m.isFast
+    ? m.power * mult * stab + m.value * 0.5 // fast: schade + energiewaarde
+    : (m.power * mult * stab * 100) / Math.max(1, m.value); // charged: schade per energie
+  return { ...m, mult, stab, dpt, score: m.isFast ? dpt * 2 + m.value * 0.3 : epRatio };
 }
 
-function prettyLocation(slug) {
-  return titleCase(slug.replace(/-area$/, ""));
+function bestMoves(cand, defTypes, atkStat) {
+  const fast = [...cand.fastNormal, ...cand.fastElite]
+    .map((i) => scoredMove(moveInfo(i), cand.types, defTypes, atkStat))
+    .sort((a, b) => b.score - a.score);
+  const charged = [...cand.chargedNormal, ...cand.chargedElite]
+    .map((i) => scoredMove(moveInfo(i), cand.types, defTypes, atkStat))
+    .sort((a, b) => b.score - a.score);
+  return { fast, charged };
 }
 
-const RARITY_LABEL = { 1: "Legendarisch", 2: "Mythisch" };
+function tmChip(m) {
+  if (m.isFast) return m.elite ? `<span class="tm-chip tm-elite">Elite Fast TM</span>` : `<span class="tm-chip">Fast TM</span>`;
+  return m.elite ? `<span class="tm-chip tm-elite">Elite Charged TM</span>` : `<span class="tm-chip">Charged TM</span>`;
+}
+
+function moveRow(m, { showMult } = {}) {
+  const multLabel = showMult
+    ? (m.mult >= GO_SUPER ? `<span style="color:var(--good)">×${m.mult} super effectief</span>`
+       : m.mult <= GO_RESIST ? `<span style="color:var(--bad)">×${m.mult}</span>`
+       : `×${m.mult}`)
+    : "";
+  const statLine = m.isFast
+    ? `${m.power} schade · +${m.value} energie · ${m.turns} beurten`
+    : `${m.power} schade · ${m.value} energie nodig · ${m.turns} beurten`;
+  return `
+    <div class="battle-move-row">
+      <span class="type-badge" style="background:var(--t-${TYPES[m.type]})">${TYPE_LABEL(m.type)}</span>
+      <div class="battle-move-mid">
+        <div class="battle-move-name">${m.name}${m.isFast ? ' <span class="fast-tag">Snelle aanval</span>' : ' <span class="charged-tag">Speciale aanval</span>'}</div>
+        <div class="battle-move-stats">${statLine}${showMult ? ` · ${multLabel}` : ""}</div>
+      </div>
+      ${tmChip(m)}
+    </div>`;
+}
 
 // ---------------------------------------------------------------------
 // Counter-algoritme
 // ---------------------------------------------------------------------
-function bestMoveAgainst(attacker, defenderTypes) {
-  let best = null;
-  for (const mi of attacker.moves) {
-    const m = moveInfo(mi);
-    const mult = typeMultiplier(m.type, defenderTypes);
-    if (mult === 0) continue;
-    const stab = attacker.types.includes(m.type) ? 1.5 : 1;
-    const atkStat = m.cls === 0 ? attacker.atk : attacker.spa;
-    const score = m.power * (m.acc / 100) * mult * stab * (atkStat / 80);
-    if (!best || score > best.score) best = { ...m, mult, stab, score };
-  }
-  return best;
-}
-
-function allMovesAgainst(attacker, defenderTypes) {
-  const out = [];
-  for (const mi of attacker.moves) {
-    const m = moveInfo(mi);
-    const mult = defenderTypes ? typeMultiplier(m.type, defenderTypes) : 1;
-    if (mult === 0) continue;
-    const stab = attacker.types.includes(m.type) ? 1.5 : 1;
-    const atkStat = m.cls === 0 ? attacker.atk : attacker.spa;
-    const score = m.power * (m.acc / 100) * mult * stab * (atkStat / 80);
-    out.push({ ...m, mult, stab, score });
-  }
-  out.sort((a, b) => b.score - a.score);
-  return out;
-}
-
-function tmChip(tm) {
-  return tm
-    ? `<span class="tm-chip">${tm}</span>`
-    : `<span class="tm-chip tm-none">Geen TM</span>`;
-}
-
-function recommendIVs(topMoves) {
-  const hasPhysical = topMoves.some((m) => m.cls === 0);
-  const hasSpecial = topMoves.some((m) => m.cls === 1);
-  if (hasSpecial && !hasPhysical) {
-    return {
-      main: "31 in HP, Verdediging, Sp. aanval, Sp. verdediging en Snelheid",
-      note: "Deze Pokémon vecht puur speciaal — 0 IV in Aanval kan zelfs handig zijn om zelfschade door verwarring te beperken.",
-    };
-  }
-  if (hasPhysical && !hasSpecial) {
-    return {
-      main: "31 in alle stats (perfecte IV's)",
-      note: "Deze Pokémon vecht puur fysiek — maximale Aanval-IV levert altijd meer schade op.",
-    };
-  }
-  return {
-    main: "31 in alle stats (perfecte IV's)",
-    note: "Gebruikt zowel fysieke als speciale aanvallen — overal maximale IV's is dan de veiligste keuze.",
-  };
+function offenseScore(cand, defTypes) {
+  const { fast, charged } = bestMoves(cand, defTypes, cand.atk);
+  const bestFast = fast[0];
+  const bestCharged = charged[0];
+  const score = (bestCharged ? bestCharged.dpt : 0) * 1.4 + (bestFast ? bestFast.dpt : 0) * 0.6;
+  return { score: score * (cand.atk / 180), bestFast, bestCharged, mult: bestCharged ? bestCharged.mult : 1 };
 }
 
 function findCounters(target, limit = 12) {
   const results = [];
   for (const raw of POKEMON) {
-    if (raw[0] === target.id) continue;
     const cand = poke(raw);
-    const off = bestMoveAgainst(cand, target.types);
-    if (!off) continue;
-    const inc = bestMoveAgainst(target, cand.types);
-    const speedBonus = (cand.spe - target.spe) * 0.4;
-    const incScore = inc ? inc.score : 0;
-    const score = off.score - incScore * 0.85 + speedBonus;
+    if (cand.id === target.id) continue;
+    if (!cand.fastNormal.length && !cand.fastElite.length) continue;
+    if (!cand.chargedNormal.length && !cand.chargedElite.length) continue;
+    const off = offenseScore(cand, target.types);
+    if (!off.bestCharged) continue;
+    const inc = offenseScore(target, cand.types);
+    const bulk = Math.sqrt(cand.def * cand.hp) / 180;
+    const score = off.score - inc.score * 0.6 + bulk * 0.5;
     results.push({ cand, off, inc, score });
   }
   results.sort((a, b) => b.score - a.score);
@@ -252,19 +269,20 @@ function renderGrid() {
   grid.innerHTML = "";
   const frag = document.createDocumentFragment();
   for (const raw of POKEMON) {
-    const [id, name, types, , , variant, baseDex] = raw;
+    const [dex, id, name, types, , , , , , , , tags, , , , , , spriteId] = raw;
     if (activeTypeFilter !== null && !types.includes(activeTypeFilter)) continue;
-    const nice = displayName({ name, variant });
-    if (q && !name.includes(q) && !nice.toLowerCase().includes(q) && String(baseDex) !== q) continue;
+    if (q && !id.includes(q) && !name.toLowerCase().includes(q) && String(dex) !== q) continue;
 
+    const isMega = tags.includes("mega");
+    const isPrimal = tags.includes("primal");
     const card = document.createElement("div");
     card.className = "poke-card";
     card.innerHTML = `
-      ${variant ? `<div class="variant-ribbon variant-${variant}">${VARIANT_TAG[variant]}${VARIANT_SUFFIX[variant] || ""}</div>` : ""}
-      <img loading="lazy" src="${spriteUrl(id)}" alt="${nice}"
-           onerror="this.onerror=null;this.src='${spriteFallback(id)}'">
-      <div class="num">#${String(baseDex).padStart(4, "0")}</div>
-      <div class="name">${nice}</div>
+      ${isPrimal ? `<div class="variant-ribbon variant-4">Primal</div>` : isMega ? `<div class="variant-ribbon variant-1">Mega</div>` : ""}
+      <img loading="lazy" src="${spriteUrl(spriteId)}" alt="${name}"
+           onerror="this.onerror=null;this.src='${spriteFallback(spriteId)}'">
+      <div class="num">#${String(dex).padStart(4, "0")}</div>
+      <div class="name">${name}</div>
     `;
     const badges = document.createElement("div");
     badges.className = "type-badges";
@@ -276,24 +294,7 @@ function renderGrid() {
   grid.appendChild(frag);
 }
 
-function moveRow(m, { showMult } = {}) {
-  const multLabel = showMult
-    ? (m.mult >= 2 ? `<span style="color:var(--good)">×${m.mult} super effectief</span>`
-       : m.mult < 1 ? `<span style="color:var(--bad)">×${m.mult}</span>`
-       : `×${m.mult} effectief`)
-    : "";
-  return `
-    <div class="battle-move-row">
-      <span class="type-badge" style="background:var(--t-${TYPES[m.type]})">${TYPE_LABEL(m.type)}</span>
-      <div class="battle-move-mid">
-        <div class="battle-move-name">${titleCase(m.name)}</div>
-        <div class="battle-move-stats">${m.power} kracht · ${m.acc}% nauwkeurig${m.cls === 0 ? " · Fysiek" : " · Speciaal"}${showMult ? ` · ${multLabel}` : ""}</div>
-      </div>
-      ${tmChip(m.tm)}
-    </div>`;
-}
-
-function statRow(label, value, max = 255) {
+function statRow(label, value, max) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return `
     <div class="stat-row">
@@ -301,6 +302,40 @@ function statRow(label, value, max = 255) {
       <div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div>
       <span>${value}</span>
     </div>`;
+}
+
+function obtainInfo(target) {
+  const lines = [];
+  if (target.tags.includes("primal")) {
+    lines.push("Primal-vorm: tijdelijk te activeren tijdens gevecht met Mega-energie, na het vangen van de gewone vorm via een Raid.");
+  } else if (target.tags.includes("mega")) {
+    lines.push("Mega-evolueer een gewone versie van deze Pokémon met Mega-energie (verzameld via Mega Raids of dagelijkse Mega-gevechten).");
+  } else if (target.parent) {
+    const parentRow = byId.get(target.parent);
+    const parentName = parentRow ? poke(parentRow).name : titleCase(target.parent);
+    lines.push(`Evolueer vanuit ${parentName} met snoepjes (mogelijk ook een evolutie-item nodig).`);
+  }
+  if (target.tags.includes("legendary") || target.tags.includes("mythical") || target.tags.includes("ultrabeast")) {
+    lines.push("Vooral te verkrijgen via Raids, Onderzoeksopdrachten of speciale evenementen.");
+  } else if (!target.tags.includes("mega") && !target.tags.includes("primal")) {
+    lines.push("In het wild te vangen, uit een ei te broeden, of als Raid-tegenstander tegen te komen.");
+  }
+  if (target.tags.includes("shadoweligible")) {
+    lines.push("Kan ook verschijnen als Shadow-Pokémon bij Team GO Rocket (grunts, bazen of ballonnen).");
+  }
+  if (target.buddyDistance != null) {
+    lines.push(`Als maatje: ${target.buddyDistance} km per snoepje.`);
+  }
+  if (target.tags.includes("regional")) {
+    lines.push("Regionaal exclusief — spawnt normaal alleen in een bepaald deel van de wereld.");
+  }
+  return lines;
+}
+
+function ivRow(label, cap, ivs) {
+  if (!ivs) return "";
+  const [level, atk, def, hp] = ivs;
+  return `<div class="info-row"><span>${label}</span><b>Level ${level} · Aanval ${atk} / Verdediging ${def} / Uith. ${hp}</b></div>`;
 }
 
 function showDetail(id) {
@@ -311,79 +346,47 @@ function showDetail(id) {
   detailView.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  document.getElementById("target-img").src = spriteUrl(target.id);
+  document.getElementById("target-img").src = spriteUrl(target.spriteId);
   document.getElementById("target-img").onerror = function () {
     this.onerror = null;
-    this.src = spriteFallback(target.id);
+    this.src = spriteFallback(target.spriteId);
   };
-  document.getElementById("target-name").textContent =
-    `#${String(target.baseDex).padStart(4, "0")} ${displayName(target)}`;
+  document.getElementById("target-name").textContent = `#${String(target.dex).padStart(4, "0")} ${target.name}`;
 
   const tagsEl = document.getElementById("target-tags");
   tagsEl.innerHTML = "";
-  if (target.variant) {
+  target.tags.filter((t) => TAG_LABEL[t]).forEach((t) => {
     const tag = document.createElement("span");
-    tag.className = `tag-badge ${target.variant === 4 ? "tag-primal" : "tag-mega"}`;
-    tag.textContent = target.variant === 4 ? "Primal" : "Mega-evolutie";
+    tag.className = `tag-badge ${TAG_CLASS[t] || "tag-mega"}`;
+    tag.textContent = TAG_LABEL[t];
     tagsEl.appendChild(tag);
-  }
-  if (target.rarity) {
-    const tag = document.createElement("span");
-    tag.className = `tag-badge ${target.rarity === 2 ? "tag-mythical" : "tag-legendary"}`;
-    tag.textContent = RARITY_LABEL[target.rarity];
-    tagsEl.appendChild(tag);
-  }
+  });
 
   const typesEl = document.getElementById("target-types");
   typesEl.innerHTML = "";
   target.types.forEach((t) => typesEl.appendChild(typeBadge(t)));
 
   document.getElementById("target-stats").innerHTML =
-    statRow("HP", target.hp) +
-    statRow("Aanval", target.atk) +
-    statRow("Verdediging", target.def) +
-    statRow("Sp. aanval", target.spa) +
-    statRow("Sp. verd.", target.spd) +
-    statRow("Snelheid", target.spe);
+    statRow("Aanval", target.atk, 350) +
+    statRow("Verdediging", target.def, 350) +
+    statRow("Uithoudingsvermogen", target.hp, 500);
 
-  const abilityNames = target.abilities.map((i) => titleCase(ABILITIES[i])).join(", ") || "Onbekend";
-  document.getElementById("info-panel").innerHTML = `
-    <div class="info-row"><span>Categorie</span><b>${target.genus || "Onbekend"}</b></div>
-    <div class="info-row"><span>Lengte</span><b>${(target.height / 10).toFixed(1)} m</b></div>
-    <div class="info-row"><span>Gewicht</span><b>${(target.weight / 10).toFixed(1)} kg</b></div>
-    <div class="info-row"><span>Vaardigheden</span><b>${abilityNames}</b></div>
-    ${target.flavor ? `<div class="info-flavor">“${target.flavor}”<span class="lang-note">Pokédex-tekst (Engels) — er bestaat geen officiële Nederlandse versie.</span></div>` : ""}
-  `;
+  const infoLines = obtainInfo(target);
+  document.getElementById("info-panel").innerHTML = infoLines.map((l) => `<div class="info-flavor">${l}</div>`).join("");
 
-  const ownMoves = allMovesAgainst(target, null).slice(0, 6);
+  const ivHtml =
+    ivRow("Little League (CP500)", 500, target.ivCp500) +
+    ivRow("Great League (CP1500)", 1500, target.ivCp1500) +
+    ivRow("Ultra League (CP2500)", 2500, target.ivCp2500) +
+    `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>`;
+  document.getElementById("location-list").innerHTML = ivHtml;
+
+  const { fast, charged } = bestMoves(target, null, target.atk);
+  const ownMoves = [...fast.slice(0, 2), ...charged.slice(0, 3)];
   const ownMovesEl = document.getElementById("own-moves-list");
   ownMovesEl.innerHTML = ownMoves.length
     ? ownMoves.map((m) => moveRow(m)).join("")
-    : `<div class="empty-msg">Geen sterke aanvallen gevonden.</div>`;
-
-  const locEl = document.getElementById("location-list");
-  locEl.innerHTML = "";
-  if (target.variant) {
-    const base = byId.get(target.baseDex);
-    const baseName = base ? displayName(poke(base)) : "de basisvorm";
-    const msg = target.variant === 4
-      ? `Dit is een Primal-vorm. Vang eerst een gewone ${baseName} en laat deze tijdens gevecht Primal Reversion ondergaan met de bijbehorende Rode/Blauwe Oerdiamant.`
-      : `Dit is een Mega-evolutie. Vang eerst een gewone ${baseName} en laat deze tijdens gevecht Mega-evolueren met de bijbehorende Mega Steen.`;
-    locEl.innerHTML = `<div class="empty-msg">${msg}</div>`;
-  } else if (target.locations.length > 0) {
-    target.locations.forEach((li) => {
-      const chip = document.createElement("span");
-      chip.className = "location-chip";
-      chip.textContent = prettyLocation(LOCATIONS[li]);
-      locEl.appendChild(chip);
-    });
-  } else if (target.evolvesFrom != null) {
-    const base = byId.get(target.evolvesFrom);
-    const baseName = base ? displayName(poke(base)) : "een eerdere vorm";
-    locEl.innerHTML = `<div class="empty-msg">Niet rechtstreeks vangbaar — verkrijgbaar door ${baseName} te laten evolueren.</div>`;
-  } else {
-    locEl.innerHTML = `<div class="empty-msg">Niet vangbaar in het wild — mogelijk verkrijgbaar via eieren, ruilen of speciale ontmoetingen.</div>`;
-  }
+    : `<div class="empty-msg">Geen aanvallen gevonden.</div>`;
 
   const weakList = document.getElementById("weakness-list");
   const weaknesses = weaknessesOf(target);
@@ -416,27 +419,29 @@ function showDetail(id) {
 
       const img = document.createElement("img");
       img.loading = "lazy";
-      img.src = spriteUrl(cand.id);
-      img.onerror = function () { this.onerror = null; this.src = spriteFallback(cand.id); };
+      img.src = spriteUrl(cand.spriteId);
+      img.onerror = function () { this.onerror = null; this.src = spriteFallback(cand.spriteId); };
       card.appendChild(img);
 
       const info = document.createElement("div");
-      const effLabel = off.mult >= 2 ? `<span style="color:var(--good)">×${off.mult} super effectief</span>`
-                       : off.mult < 1 ? `<span style="color:var(--bad)">×${off.mult}</span>`
+      const effLabel = off.mult >= GO_SUPER ? `<span style="color:var(--good)">×${off.mult} super effectief</span>`
+                       : off.mult <= GO_RESIST ? `<span style="color:var(--bad)">×${off.mult}</span>`
                        : `×${off.mult}`;
-      const incLabel = inc
-        ? (inc.mult >= 2 ? `<span style="color:var(--bad)">×${inc.mult} terug</span>` : `×${inc.mult} terug`)
-        : "geen effect terug";
-      const variantTag = cand.variant
-        ? `<span class="tag-badge ${cand.variant === 4 ? "tag-primal" : "tag-mega"}" style="font-size:0.65rem;padding:2px 8px;margin-left:6px;">${cand.variant === 4 ? "Primal" : "Mega"}</span>`
+      const incLabel = inc.bestCharged
+        ? (inc.mult >= GO_SUPER ? `<span style="color:var(--bad)">×${inc.mult} terug</span>` : `×${inc.mult} terug`)
+        : "geen effectieve aanval terug";
+      const variantTag = cand.tags.includes("primal")
+        ? `<span class="tag-badge tag-primal" style="font-size:0.65rem;padding:2px 8px;margin-left:6px;">Primal</span>`
+        : cand.tags.includes("mega")
+        ? `<span class="tag-badge tag-mega" style="font-size:0.65rem;padding:2px 8px;margin-left:6px;">Mega</span>`
         : "";
 
       info.innerHTML = `
         <div class="counter-rank">#${idx + 1}</div>
-        <div class="counter-name">${displayName(cand)}${variantTag}</div>
+        <div class="counter-name">${cand.name}${variantTag}</div>
         <div class="type-badges"></div>
-        <div class="counter-move">🗡️ <b>${titleCase(off.name)}</b> (${TYPE_LABEL(off.type)}, ${effLabel})</div>
-        <div class="counter-reason">Ontvangt ${incLabel} van ${displayName(target)}</div>
+        <div class="counter-move">🗡️ <b>${off.bestCharged.name}</b> (${TYPE_LABEL(off.bestCharged.type)}, ${effLabel})</div>
+        <div class="counter-reason">Ontvangt ${incLabel} van ${target.name}</div>
       `;
       info.querySelector(".type-badges").append(...cand.types.map(typeBadge));
       card.appendChild(info);
@@ -460,32 +465,34 @@ function showBattlePlan(candId, targetId) {
   battleView.classList.remove("hidden");
   window.scrollTo({ top: 0, behavior: "smooth" });
 
-  document.getElementById("battle-cand-img").src = spriteUrl(cand.id);
-  document.getElementById("battle-cand-img").onerror = function () { this.onerror = null; this.src = spriteFallback(cand.id); };
-  document.getElementById("battle-cand-name").textContent = displayName(cand);
+  document.getElementById("battle-cand-img").src = spriteUrl(cand.spriteId);
+  document.getElementById("battle-cand-img").onerror = function () { this.onerror = null; this.src = spriteFallback(cand.spriteId); };
+  document.getElementById("battle-cand-name").textContent = cand.name;
   const candTypesEl = document.getElementById("battle-cand-types");
   candTypesEl.innerHTML = "";
   cand.types.forEach((t) => candTypesEl.appendChild(typeBadge(t)));
 
-  document.getElementById("battle-target-img").src = spriteUrl(target.id);
-  document.getElementById("battle-target-img").onerror = function () { this.onerror = null; this.src = spriteFallback(target.id); };
-  document.getElementById("battle-target-name").textContent = displayName(target);
+  document.getElementById("battle-target-img").src = spriteUrl(target.spriteId);
+  document.getElementById("battle-target-img").onerror = function () { this.onerror = null; this.src = spriteFallback(target.spriteId); };
+  document.getElementById("battle-target-name").textContent = target.name;
   const targetTypesEl = document.getElementById("battle-target-types");
   targetTypesEl.innerHTML = "";
   target.types.forEach((t) => targetTypesEl.appendChild(typeBadge(t)));
 
-  document.getElementById("battle-moves-title").textContent = `Beste moves om ${displayName(target)} te verslaan`;
-  const moves = allMovesAgainst(cand, target.types).slice(0, 5);
+  document.getElementById("battle-moves-title").textContent = `Beste aanvallen om ${target.name} te verslaan`;
+  const { fast, charged } = bestMoves(cand, target.types, cand.atk);
+  const moves = [...fast.slice(0, 1), ...charged.slice(0, 3)];
   const movesEl = document.getElementById("battle-moves-list");
   movesEl.innerHTML = moves.length
     ? moves.map((m) => moveRow(m, { showMult: true })).join("")
     : `<div class="empty-msg">Geen effectieve aanvallen gevonden.</div>`;
 
-  const iv = recommendIVs(moves);
-  document.getElementById("battle-iv-panel").innerHTML = `
-    <div class="info-row"><span>Aanbevolen IV's</span><b>${iv.main}</b></div>
-    <div class="info-flavor">${iv.note}</div>
-  `;
+  document.getElementById("battle-iv-panel").innerHTML =
+    ivRow("Little League (CP500)", 500, cand.ivCp500) +
+    ivRow("Great League (CP1500)", 1500, cand.ivCp1500) +
+    ivRow("Ultra League (CP2500)", 2500, cand.ivCp2500) +
+    `<div class="info-row"><span>Master League / Raids</span><b>Level 50-51 · 15/15/15 IV's</b></div>` +
+    `<div class="info-flavor">Voor Raids maakt het niveau niet uit voor de CP-limiet — kies altijd de hoogst mogelijke IV's en level.</div>`;
 }
 
 battleBackBtn.addEventListener("click", () => {

@@ -366,7 +366,6 @@ main {
 }
 .battle-move-name {
   font-weight: 700;
-  text-transform: capitalize;
 }
 .battle-move-stats {
   font-size: 0.78rem;
@@ -387,6 +386,21 @@ main {
   color: var(--muted);
   font-weight: 600;
 }
+.tm-chip.tm-elite {
+  background: linear-gradient(135deg, #ffcb05, #ff9d00);
+  color: #1a1200;
+}
+.fast-tag, .charged-tag {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: none;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.fast-tag { background: #3c5aa633; color: #9db4e8; }
+.charged-tag { background: #e5484d33; color: #ff9d9d; }
 
 /* Matchup header (battle plan view) */
 .matchup-card {
