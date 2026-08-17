@@ -93,6 +93,10 @@ function poke(p) {
     id: p[0], name: p[1], types: p[2],
     hp: p[3][0], atk: p[3][1], def: p[3][2], spa: p[3][3], spd: p[3][4], spe: p[3][5],
     moves: p[4],
+    variant: p[5], baseDex: p[6],
+    genus: p[7], flavor: p[8],
+    height: p[9], weight: p[10],
+    abilities: p[11], evolvesFrom: p[12], locations: p[13], rarity: p[14],
   };
 }
 
@@ -102,6 +106,25 @@ function moveInfo(i) {
 }
 
 const TYPE_LABEL = (i) => TYPES[i][0].toUpperCase() + TYPES[i].slice(1);
+
+const titleCase = (s) => s.split("-").map((w) => w[0].toUpperCase() + w.slice(1)).join(" ");
+
+const VARIANT_TAG = { 1: "Mega", 2: "Mega", 3: "Mega", 4: "Primal" };
+const VARIANT_SUFFIX = { 2: " X", 3: " Y" };
+
+function displayName(p) {
+  const variant = p.variant ?? 0;
+  if (!variant) return titleCase(p.name);
+  const suffix = { 1: "-mega", 2: "-mega-x", 3: "-mega-y", 4: "-primal" }[variant];
+  const base = titleCase(p.name.slice(0, -suffix.length));
+  return `${VARIANT_TAG[variant]} ${base}${VARIANT_SUFFIX[variant] || ""}`;
+}
+
+function prettyLocation(slug) {
+  return titleCase(slug.replace(/-area$/, ""));
+}
+
+const RARITY_LABEL = { 1: "Legendarisch", 2: "Mythisch" };
 
 // ---------------------------------------------------------------------
 // Counter-algoritme
@@ -187,17 +210,19 @@ function renderGrid() {
   grid.innerHTML = "";
   const frag = document.createDocumentFragment();
   for (const raw of POKEMON) {
-    const [id, name, types] = raw;
+    const [id, name, types, , , variant, baseDex] = raw;
     if (activeTypeFilter !== null && !types.includes(activeTypeFilter)) continue;
-    if (q && !name.includes(q) && String(id) !== q) continue;
+    const nice = displayName({ name, variant });
+    if (q && !name.includes(q) && !nice.toLowerCase().includes(q) && String(baseDex) !== q) continue;
 
     const card = document.createElement("div");
     card.className = "poke-card";
     card.innerHTML = `
-      <img loading="lazy" src="${spriteUrl(id)}" alt="${name}"
+      ${variant ? `<div class="variant-ribbon variant-${variant}">${VARIANT_TAG[variant]}${VARIANT_SUFFIX[variant] || ""}</div>` : ""}
+      <img loading="lazy" src="${spriteUrl(id)}" alt="${nice}"
            onerror="this.onerror=null;this.src='${spriteFallback(id)}'">
-      <div class="num">#${String(id).padStart(4, "0")}</div>
-      <div class="name">${name.replace(/-/g, " ")}</div>
+      <div class="num">#${String(baseDex).padStart(4, "0")}</div>
+      <div class="name">${nice}</div>
     `;
     const badges = document.createElement("div");
     badges.className = "type-badges";
@@ -233,7 +258,22 @@ function showDetail(id) {
     this.src = spriteFallback(target.id);
   };
   document.getElementById("target-name").textContent =
-    `#${String(target.id).padStart(4, "0")} ${target.name.replace(/-/g, " ")}`;
+    `#${String(target.baseDex).padStart(4, "0")} ${displayName(target)}`;
+
+  const tagsEl = document.getElementById("target-tags");
+  tagsEl.innerHTML = "";
+  if (target.variant) {
+    const tag = document.createElement("span");
+    tag.className = `tag-badge ${target.variant === 4 ? "tag-primal" : "tag-mega"}`;
+    tag.textContent = target.variant === 4 ? "Primal" : "Mega-evolutie";
+    tagsEl.appendChild(tag);
+  }
+  if (target.rarity) {
+    const tag = document.createElement("span");
+    tag.className = `tag-badge ${target.rarity === 2 ? "tag-mythical" : "tag-legendary"}`;
+    tag.textContent = RARITY_LABEL[target.rarity];
+    tagsEl.appendChild(tag);
+  }
 
   const typesEl = document.getElementById("target-types");
   typesEl.innerHTML = "";
@@ -246,6 +286,39 @@ function showDetail(id) {
     statRow("Sp. aanval", target.spa) +
     statRow("Sp. verd.", target.spd) +
     statRow("Snelheid", target.spe);
+
+  const abilityNames = target.abilities.map((i) => titleCase(ABILITIES[i])).join(", ") || "Onbekend";
+  document.getElementById("info-panel").innerHTML = `
+    <div class="info-row"><span>Categorie</span><b>${target.genus || "Onbekend"}</b></div>
+    <div class="info-row"><span>Lengte</span><b>${(target.height / 10).toFixed(1)} m</b></div>
+    <div class="info-row"><span>Gewicht</span><b>${(target.weight / 10).toFixed(1)} kg</b></div>
+    <div class="info-row"><span>Vaardigheden</span><b>${abilityNames}</b></div>
+    ${target.flavor ? `<div class="info-flavor">“${target.flavor}”<span class="lang-note">Pokédex-tekst (Engels) — er bestaat geen officiële Nederlandse versie.</span></div>` : ""}
+  `;
+
+  const locEl = document.getElementById("location-list");
+  locEl.innerHTML = "";
+  if (target.variant) {
+    const base = byId.get(target.baseDex);
+    const baseName = base ? displayName(poke(base)) : "de basisvorm";
+    const msg = target.variant === 4
+      ? `Dit is een Primal-vorm. Vang eerst een gewone ${baseName} en laat deze tijdens gevecht Primal Reversion ondergaan met de bijbehorende Rode/Blauwe Oerdiamant.`
+      : `Dit is een Mega-evolutie. Vang eerst een gewone ${baseName} en laat deze tijdens gevecht Mega-evolueren met de bijbehorende Mega Steen.`;
+    locEl.innerHTML = `<div class="empty-msg">${msg}</div>`;
+  } else if (target.locations.length > 0) {
+    target.locations.forEach((li) => {
+      const chip = document.createElement("span");
+      chip.className = "location-chip";
+      chip.textContent = prettyLocation(LOCATIONS[li]);
+      locEl.appendChild(chip);
+    });
+  } else if (target.evolvesFrom != null) {
+    const base = byId.get(target.evolvesFrom);
+    const baseName = base ? displayName(poke(base)) : "een eerdere vorm";
+    locEl.innerHTML = `<div class="empty-msg">Niet rechtstreeks vangbaar — verkrijgbaar door ${baseName} te laten evolueren.</div>`;
+  } else {
+    locEl.innerHTML = `<div class="empty-msg">Niet vangbaar in het wild — mogelijk verkrijgbaar via eieren, ruilen of speciale ontmoetingen.</div>`;
+  }
 
   const weakList = document.getElementById("weakness-list");
   const weaknesses = weaknessesOf(target);
@@ -289,13 +362,16 @@ function showDetail(id) {
       const incLabel = inc
         ? (inc.mult >= 2 ? `<span style="color:var(--bad)">×${inc.mult} terug</span>` : `×${inc.mult} terug`)
         : "geen effect terug";
+      const variantTag = cand.variant
+        ? `<span class="tag-badge ${cand.variant === 4 ? "tag-primal" : "tag-mega"}" style="font-size:0.65rem;padding:2px 8px;margin-left:6px;">${cand.variant === 4 ? "Primal" : "Mega"}</span>`
+        : "";
 
       info.innerHTML = `
         <div class="counter-rank">#${idx + 1}</div>
-        <div class="counter-name">${cand.name.replace(/-/g, " ")}</div>
+        <div class="counter-name">${displayName(cand)}${variantTag}</div>
         <div class="type-badges"></div>
-        <div class="counter-move">🗡️ <b>${off.name.replace(/-/g, " ")}</b> (${TYPE_LABEL(off.type)}, ${effLabel})</div>
-        <div class="counter-reason">Ontvangt ${incLabel} van ${target.name.replace(/-/g, " ")}</div>
+        <div class="counter-move">🗡️ <b>${titleCase(off.name)}</b> (${TYPE_LABEL(off.type)}, ${effLabel})</div>
+        <div class="counter-reason">Ontvangt ${incLabel} van ${displayName(target)}</div>
       `;
       info.querySelector(".type-badges").append(...cand.types.map(typeBadge));
       card.appendChild(info);

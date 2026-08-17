@@ -289,6 +289,80 @@ main {
   padding: 10px 0;
 }
 
+/* Variant (Mega/Primal) & rarity badges */
+.variant-ribbon {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 999px;
+  color: #1a1200;
+}
+.poke-card { position: relative; }
+.variant-1, .variant-2, .variant-3 { background: linear-gradient(135deg, #ffcb05, #ff9d00); }
+.variant-4 { background: linear-gradient(135deg, #ff5e5e, #b30000); color: #fff; }
+
+.tag-badge {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #1a1200;
+}
+.tag-mega { background: linear-gradient(135deg, #ffcb05, #ff9d00); }
+.tag-primal { background: linear-gradient(135deg, #ff5e5e, #b30000); color: #fff; }
+.tag-legendary { background: linear-gradient(135deg, #a890f0, #7038f8); color: #fff; }
+.tag-mythical { background: linear-gradient(135deg, #f85888, #c2185b); color: #fff; }
+
+/* Info panel */
+.info-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 0.88rem;
+}
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid #ffffff0f;
+  color: var(--muted);
+}
+.info-row b { color: var(--text); font-weight: 600; text-align: right; }
+.info-flavor {
+  font-style: italic;
+  color: var(--muted);
+  line-height: 1.5;
+  padding-top: 4px;
+  font-size: 0.85rem;
+}
+.info-flavor .lang-note {
+  display: block;
+  font-style: normal;
+  font-size: 0.7rem;
+  color: #666c8f;
+  margin-top: 6px;
+}
+
+/* Locations */
+.location-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.location-chip {
+  background: var(--panel-alt);
+  color: var(--text);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+}
+
 footer {
   text-align: center;
   color: var(--muted);
