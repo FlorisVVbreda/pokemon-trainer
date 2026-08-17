@@ -60,6 +60,11 @@
       </div>
     </div>
 
+    <div class="panel">
+      <h3>Beste moves van deze Pokémon</h3>
+      <div id="own-moves-list" class="battle-moves-list"></div>
+    </div>
+
     <div class="results-grid">
       <div class="panel">
         <h3>Sterke aanvalstypes tegen deze Pokémon</h3>
@@ -69,6 +74,36 @@
       <div class="panel">
         <h3>Beste Pokémon om hem te verslaan</h3>
         <div id="counter-list" class="counter-list"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="battle-view" class="view hidden">
+    <button id="battle-back-btn" class="back-btn">← Terug</button>
+
+    <div class="matchup-card">
+      <div class="matchup-side">
+        <img id="battle-cand-img" class="matchup-img" alt="">
+        <div id="battle-cand-name" class="matchup-name"></div>
+        <div id="battle-cand-types" class="type-badges"></div>
+      </div>
+      <div class="matchup-vs">VS</div>
+      <div class="matchup-side matchup-target">
+        <img id="battle-target-img" class="matchup-img" alt="">
+        <div id="battle-target-name" class="matchup-name"></div>
+        <div id="battle-target-types" class="type-badges"></div>
+      </div>
+    </div>
+
+    <div class="results-grid">
+      <div class="panel">
+        <h3 id="battle-moves-title">Beste moves</h3>
+        <div id="battle-moves-list" class="battle-moves-list"></div>
+      </div>
+
+      <div class="panel">
+        <h3>Aanbevolen IV's</h3>
+        <div id="battle-iv-panel" class="info-panel"></div>
       </div>
     </div>
   </section>

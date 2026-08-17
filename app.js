@@ -102,7 +102,7 @@ function poke(p) {
 
 function moveInfo(i) {
   const m = MOVES[i];
-  return { name: m[0], type: m[1], power: m[2], acc: m[3], cls: m[4] };
+  return { name: m[0], type: m[1], power: m[2], acc: m[3], cls: m[4], tm: m[5] };
 }
 
 const TYPE_LABEL = (i) => TYPES[i][0].toUpperCase() + TYPES[i].slice(1);
@@ -141,6 +141,48 @@ function bestMoveAgainst(attacker, defenderTypes) {
     if (!best || score > best.score) best = { ...m, mult, stab, score };
   }
   return best;
+}
+
+function allMovesAgainst(attacker, defenderTypes) {
+  const out = [];
+  for (const mi of attacker.moves) {
+    const m = moveInfo(mi);
+    const mult = defenderTypes ? typeMultiplier(m.type, defenderTypes) : 1;
+    if (mult === 0) continue;
+    const stab = attacker.types.includes(m.type) ? 1.5 : 1;
+    const atkStat = m.cls === 0 ? attacker.atk : attacker.spa;
+    const score = m.power * (m.acc / 100) * mult * stab * (atkStat / 80);
+    out.push({ ...m, mult, stab, score });
+  }
+  out.sort((a, b) => b.score - a.score);
+  return out;
+}
+
+function tmChip(tm) {
+  return tm
+    ? `<span class="tm-chip">${tm}</span>`
+    : `<span class="tm-chip tm-none">Geen TM</span>`;
+}
+
+function recommendIVs(topMoves) {
+  const hasPhysical = topMoves.some((m) => m.cls === 0);
+  const hasSpecial = topMoves.some((m) => m.cls === 1);
+  if (hasSpecial && !hasPhysical) {
+    return {
+      main: "31 in HP, Verdediging, Sp. aanval, Sp. verdediging en Snelheid",
+      note: "Deze Pokémon vecht puur speciaal — 0 IV in Aanval kan zelfs handig zijn om zelfschade door verwarring te beperken.",
+    };
+  }
+  if (hasPhysical && !hasSpecial) {
+    return {
+      main: "31 in alle stats (perfecte IV's)",
+      note: "Deze Pokémon vecht puur fysiek — maximale Aanval-IV levert altijd meer schade op.",
+    };
+  }
+  return {
+    main: "31 in alle stats (perfecte IV's)",
+    note: "Gebruikt zowel fysieke als speciale aanvallen — overal maximale IV's is dan de veiligste keuze.",
+  };
 }
 
 function findCounters(target, limit = 12) {
@@ -234,6 +276,23 @@ function renderGrid() {
   grid.appendChild(frag);
 }
 
+function moveRow(m, { showMult } = {}) {
+  const multLabel = showMult
+    ? (m.mult >= 2 ? `<span style="color:var(--good)">×${m.mult} super effectief</span>`
+       : m.mult < 1 ? `<span style="color:var(--bad)">×${m.mult}</span>`
+       : `×${m.mult} effectief`)
+    : "";
+  return `
+    <div class="battle-move-row">
+      <span class="type-badge" style="background:var(--t-${TYPES[m.type]})">${TYPE_LABEL(m.type)}</span>
+      <div class="battle-move-mid">
+        <div class="battle-move-name">${titleCase(m.name)}</div>
+        <div class="battle-move-stats">${m.power} kracht · ${m.acc}% nauwkeurig${m.cls === 0 ? " · Fysiek" : " · Speciaal"}${showMult ? ` · ${multLabel}` : ""}</div>
+      </div>
+      ${tmChip(m.tm)}
+    </div>`;
+}
+
 function statRow(label, value, max = 255) {
   const pct = Math.min(100, Math.round((value / max) * 100));
   return `
@@ -295,6 +354,12 @@ function showDetail(id) {
     <div class="info-row"><span>Vaardigheden</span><b>${abilityNames}</b></div>
     ${target.flavor ? `<div class="info-flavor">“${target.flavor}”<span class="lang-note">Pokédex-tekst (Engels) — er bestaat geen officiële Nederlandse versie.</span></div>` : ""}
   `;
+
+  const ownMoves = allMovesAgainst(target, null).slice(0, 6);
+  const ownMovesEl = document.getElementById("own-moves-list");
+  ownMovesEl.innerHTML = ownMoves.length
+    ? ownMoves.map((m) => moveRow(m)).join("")
+    : `<div class="empty-msg">Geen sterke aanvallen gevonden.</div>`;
 
   const locEl = document.getElementById("location-list");
   locEl.innerHTML = "";
@@ -375,11 +440,62 @@ function showDetail(id) {
       `;
       info.querySelector(".type-badges").append(...cand.types.map(typeBadge));
       card.appendChild(info);
-      card.addEventListener("click", () => showDetail(cand.id));
+      card.addEventListener("click", () => showBattlePlan(cand.id, target.id));
       counterList.appendChild(card);
     });
   }
 }
+
+const battleView = document.getElementById("battle-view");
+const battleBackBtn = document.getElementById("battle-back-btn");
+let battleReturnTarget = null;
+
+function showBattlePlan(candId, targetId) {
+  const cand = poke(byId.get(candId));
+  const target = poke(byId.get(targetId));
+  battleReturnTarget = targetId;
+
+  detailView.classList.add("hidden");
+  pickerView.classList.add("hidden");
+  battleView.classList.remove("hidden");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  document.getElementById("battle-cand-img").src = spriteUrl(cand.id);
+  document.getElementById("battle-cand-img").onerror = function () { this.onerror = null; this.src = spriteFallback(cand.id); };
+  document.getElementById("battle-cand-name").textContent = displayName(cand);
+  const candTypesEl = document.getElementById("battle-cand-types");
+  candTypesEl.innerHTML = "";
+  cand.types.forEach((t) => candTypesEl.appendChild(typeBadge(t)));
+
+  document.getElementById("battle-target-img").src = spriteUrl(target.id);
+  document.getElementById("battle-target-img").onerror = function () { this.onerror = null; this.src = spriteFallback(target.id); };
+  document.getElementById("battle-target-name").textContent = displayName(target);
+  const targetTypesEl = document.getElementById("battle-target-types");
+  targetTypesEl.innerHTML = "";
+  target.types.forEach((t) => targetTypesEl.appendChild(typeBadge(t)));
+
+  document.getElementById("battle-moves-title").textContent = `Beste moves om ${displayName(target)} te verslaan`;
+  const moves = allMovesAgainst(cand, target.types).slice(0, 5);
+  const movesEl = document.getElementById("battle-moves-list");
+  movesEl.innerHTML = moves.length
+    ? moves.map((m) => moveRow(m, { showMult: true })).join("")
+    : `<div class="empty-msg">Geen effectieve aanvallen gevonden.</div>`;
+
+  const iv = recommendIVs(moves);
+  document.getElementById("battle-iv-panel").innerHTML = `
+    <div class="info-row"><span>Aanbevolen IV's</span><b>${iv.main}</b></div>
+    <div class="info-flavor">${iv.note}</div>
+  `;
+}
+
+battleBackBtn.addEventListener("click", () => {
+  battleView.classList.add("hidden");
+  if (battleReturnTarget != null) {
+    showDetail(battleReturnTarget);
+  } else {
+    pickerView.classList.remove("hidden");
+  }
+});
 
 backBtn.addEventListener("click", () => {
   detailView.classList.add("hidden");
