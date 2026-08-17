@@ -182,14 +182,17 @@ function groupedMoves(cand, defTypes, atkStat) {
 
 function moveGroupsHtml(groups, { showMult } = {}) {
   const sections = [
-    ["Beste Snelle aanval — gewone TM", groups.fastNormal.slice(0, 1)],
-    ["Beste Snelle aanval — Elite TM", groups.fastElite.slice(0, 1)],
-    ["Beste Speciale aanvallen — gewone TM", groups.chargedNormal.slice(0, 2)],
-    ["Beste Speciale aanvallen — Elite TM", groups.chargedElite.slice(0, 2)],
-  ].filter(([, moves]) => moves.length > 0);
-  if (sections.length === 0) return `<div class="empty-msg">Geen aanvallen gevonden.</div>`;
+    ["Beste Snelle aanval — gewone TM", groups.fastNormal.slice(0, 1), "Geen gewone Snelle aanval beschikbaar."],
+    ["Beste Snelle aanval — Elite TM", groups.fastElite.slice(0, 1), "Geen Elite-moves beschikbaar voor deze Pokémon."],
+    ["Beste Speciale aanvallen — gewone TM", groups.chargedNormal.slice(0, 2), "Geen gewone Speciale aanvallen beschikbaar."],
+    ["Beste Speciale aanvallen — Elite TM", groups.chargedElite.slice(0, 2), "Geen Elite-moves beschikbaar voor deze Pokémon."],
+  ];
+  if (sections.every(([, moves]) => moves.length === 0)) return `<div class="empty-msg">Geen aanvallen gevonden.</div>`;
   return sections
-    .map(([title, moves]) => `<div class="move-group-title">${title}</div>` + moves.map((m) => moveRow(m, { showMult })).join(""))
+    .map(([title, moves, emptyMsg]) =>
+      `<div class="move-group-title">${title}</div>` +
+      (moves.length ? moves.map((m) => moveRow(m, { showMult })).join("") : `<div class="empty-msg">${emptyMsg}</div>`)
+    )
     .join("");
 }
 
