@@ -24,6 +24,10 @@
 <header class="topbar">
   <h1><span class="logo-ball"></span> Pokémon GO Trainer</h1>
   <p class="subtitle">Kies een Pokémon en ontdek hoe je hem verslaat in Raids en Battles</p>
+  <nav class="main-nav">
+    <button id="nav-pokedex" class="nav-tab active">Pokédex</button>
+    <button id="nav-events" class="nav-tab">📅 Events</button>
+  </nav>
 </header>
 
 <main>
@@ -35,6 +39,17 @@
     <div id="poke-grid" class="poke-grid"></div>
   </section>
 
+  <section id="events-view" class="view hidden">
+    <div class="events-header">
+      <h2>Pokémon GO Events</h2>
+      <a href="https://leekduck.com/events/" target="_blank" rel="noopener" class="events-external-link">Volledige kalender op LeekDuck.com ↗</a>
+    </div>
+    <div id="events-status" class="empty-msg">Events laden…</div>
+    <div id="events-active-list" class="events-list"></div>
+    <h3 id="events-upcoming-title" class="hidden">Binnenkort</h3>
+    <div id="events-upcoming-list" class="events-list"></div>
+  </section>
+
   <section id="detail-view" class="view hidden">
     <button id="back-btn" class="back-btn">← Terug naar overzicht</button>
 
@@ -44,9 +59,12 @@
         <h2 id="target-name"></h2>
         <div id="target-tags" class="type-badges"></div>
         <div id="target-types" class="type-badges"></div>
+        <div id="target-quickfacts" class="quickfacts"></div>
         <div id="target-stats" class="stat-bars"></div>
       </div>
     </div>
+
+    <div id="event-banner-slot"></div>
 
     <div class="results-grid">
       <div class="panel">

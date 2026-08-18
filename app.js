@@ -151,6 +151,69 @@ const TAG_CLASS = {
 };
 
 // ---------------------------------------------------------------------
+// Live Pokémon GO events (LeekDuck, via de ScrapedDuck-spiegel op jsDelivr)
+// Wordt gebruikt om te tonen of een Pokémon NU een Raid-boss/Spotlight is
+// en of de shiny-kans daardoor tijdelijk verhoogd is.
+// ---------------------------------------------------------------------
+const EVENTS_URL = "https://cdn.jsdelivr.net/gh/bigfoott/ScrapedDuck@data/events.json";
+let eventsPromise = null;
+
+function loadEvents() {
+  if (!eventsPromise) {
+    eventsPromise = fetch(EVENTS_URL)
+      .then((r) => (r.ok ? r.json() : []))
+      .catch(() => []);
+  }
+  return eventsPromise;
+}
+
+function normPokeName(raw) {
+  let s = raw.toLowerCase().trim();
+  const m = s.match(/^(.*)\s*\((mega(?:\s*[xy])?|primal|armored|shadow)\)$/i);
+  if (m) s = `${m[2]} ${m[1]}`;
+  return s.replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function isEventActive(e, now) {
+  const start = Date.parse(e.start);
+  const end = Date.parse(e.end);
+  return !isNaN(start) && !isNaN(end) && start <= now && now <= end;
+}
+
+// Zoekt of `target` nu ergens als Raid-boss / Spotlight-Pokémon voorkomt
+// in de live, actieve events.
+function findBoostsFor(target, events) {
+  const now = Date.now();
+  const key = normPokeName(target.name);
+  const boosts = [];
+  for (const e of events) {
+    if (!isEventActive(e, now)) continue;
+    const ex = e.extraData || {};
+    const candidates = [];
+    if (ex.raidbattles && ex.raidbattles.bosses) {
+      for (const b of ex.raidbattles.bosses) candidates.push({ name: b.name, canBeShiny: !!b.canBeShiny, kind: "raid" });
+    }
+    if (ex.spotlight) {
+      const list = ex.spotlight.list && ex.spotlight.list.length ? ex.spotlight.list : [ex.spotlight];
+      for (const s of list) candidates.push({ name: s.name, canBeShiny: !!s.canBeShiny, kind: "spotlight", bonus: ex.spotlight.bonus });
+    }
+    for (const c of candidates) {
+      if (normPokeName(c.name) === key) {
+        boosts.push({ event: e, canBeShiny: c.canBeShiny, kind: c.kind, bonus: c.bonus });
+        break;
+      }
+    }
+  }
+  return boosts;
+}
+
+function fmtEventDate(iso) {
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "";
+  return d.toLocaleString("nl-NL", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+}
+
+// ---------------------------------------------------------------------
 // Move scoring
 // ---------------------------------------------------------------------
 function scoredMove(m, ownTypes, defTypes, atkStat) {
@@ -368,20 +431,15 @@ function obtainInfo(target) {
   if (target.tags.includes("regional")) {
     lines.push("Regionaal exclusief — spawnt normaal alleen in een bepaald deel van de wereld.");
   }
-  lines.push(
-    "Shiny-kans: standaard ongeveer 1 op 500, tijdens Community Day of shiny-evenementen vaak verhoogd naar zo'n 1 op 25. " +
-    "Dit verschilt per periode en niet elke Pokémon heeft al een shiny-vorm — dit is een algemene richtlijn, geen actueel percentage voor dit moment."
-  );
   return lines;
 }
 
-function hundoRow(target) {
+function quickfactsHtml(target) {
   const cp20 = cpAtLevel(20, target.atk, target.def, target.hp);
   const cp25 = cpAtLevel(25, target.atk, target.def, target.hp);
   return `
-    <div class="info-row"><span>Hundo CP (level 20)</span><b>${cp20}</b></div>
-    <div class="info-row"><span>Hundo CP (weer-boost, level 25)</span><b>${cp25}</b></div>
-    <div class="info-flavor">Komt de CP in het vangscherm exact overeen met een van deze waarden? Dan is de kans groot dat je een 100%-IV ("hundo") te pakken hebt.</div>
+    <div class="quickfact-chip"><span>Hundo CP (100% IV)</span><b>L20: ${cp20} · L25 boost: ${cp25}</b></div>
+    <div class="quickfact-chip" id="shiny-chip"><span>Shiny-kans</span><b>±1 op 500 (standaard)</b></div>
   `;
 }
 
@@ -397,7 +455,10 @@ function renderDetail(id) {
 
   pickerView.classList.add("hidden");
   battleView.classList.add("hidden");
+  eventsView.classList.add("hidden");
   detailView.classList.remove("hidden");
+  navPokedex.classList.add("active");
+  navEvents.classList.remove("active");
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   document.getElementById("target-img").src = spriteUrl(target.spriteId);
@@ -405,7 +466,9 @@ function renderDetail(id) {
     this.onerror = null;
     this.src = spriteFallback(target.spriteId);
   };
-  document.getElementById("target-name").textContent = `#${String(target.dex).padStart(4, "0")} ${target.name}`;
+  const nameEl = document.getElementById("target-name");
+  nameEl.textContent = `#${String(target.dex).padStart(4, "0")} ${target.name}`;
+  nameEl.dataset.id = id;
 
   const tagsEl = document.getElementById("target-tags");
   tagsEl.innerHTML = "";
@@ -420,6 +483,35 @@ function renderDetail(id) {
   typesEl.innerHTML = "";
   target.types.forEach((t) => typesEl.appendChild(typeBadge(t)));
 
+  document.getElementById("target-quickfacts").innerHTML = quickfactsHtml(target);
+  document.getElementById("event-banner-slot").innerHTML = "";
+  loadEvents().then((events) => {
+    if (!byId.get(id) || document.getElementById("target-name").dataset.id !== id) return;
+    const boosts = findBoostsFor(target, events);
+    const slot = document.getElementById("event-banner-slot");
+    slot.innerHTML = boosts
+      .map((b) => {
+        const kindLabel = b.kind === "raid" ? "Nu een Raid-boss" : "Nu Spotlight Hour";
+        const shinyNote = b.canBeShiny
+          ? "Shiny mogelijk — en de kans is tijdens dit event verhoogd (exact percentage niet officieel bekend, maar duidelijk hoger dan normaal)."
+          : "Geen shiny-boost tijdens dit specifieke event.";
+        return `
+          <a class="event-banner" href="${b.event.link}" target="_blank" rel="noopener">
+            <div class="eb-title">🔥 ${kindLabel}: ${b.event.name}</div>
+            <div class="eb-detail">Actief t/m ${fmtEventDate(b.event.end)} · ${shinyNote} Check de Hundo CP hierboven bij het vangen!</div>
+          </a>`;
+      })
+      .join("");
+    const shinyChip = document.getElementById("shiny-chip");
+    if (shinyChip) {
+      const shinyBoost = boosts.find((b) => b.canBeShiny);
+      if (shinyBoost) {
+        shinyChip.classList.add("shiny-boost");
+        shinyChip.innerHTML = `<span>Shiny-kans</span><b>✨ NU VERHOOGD (${shinyBoost.event.name})</b>`;
+      }
+    }
+  });
+
   document.getElementById("target-stats").innerHTML =
     statRow("Aanval", target.atk, 350) +
     statRow("Verdediging", target.def, 350) +
@@ -432,8 +524,7 @@ function renderDetail(id) {
     ivRow("Little League (CP500)", 500, target.ivCp500) +
     ivRow("Great League (CP1500)", 1500, target.ivCp1500) +
     ivRow("Ultra League (CP2500)", 2500, target.ivCp2500) +
-    `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>` +
-    hundoRow(target);
+    `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>`;
   document.getElementById("location-list").innerHTML = ivHtml;
 
   document.getElementById("own-moves-list").innerHTML = moveGroupsHtml(groupedMoves(target, null, target.atk));
@@ -510,7 +601,10 @@ function renderBattle(candId, targetId) {
 
   detailView.classList.add("hidden");
   pickerView.classList.add("hidden");
+  eventsView.classList.add("hidden");
   battleView.classList.remove("hidden");
+  navPokedex.classList.add("active");
+  navEvents.classList.remove("active");
   window.scrollTo({ top: 0, behavior: "smooth" });
 
   document.getElementById("battle-cand-img").src = spriteUrl(cand.spriteId);
@@ -540,15 +634,80 @@ function renderBattle(candId, targetId) {
 }
 
 // ---------------------------------------------------------------------
+// Events-tab: live kalender (LeekDuck via ScrapedDuck)
+// ---------------------------------------------------------------------
+const eventsView = document.getElementById("events-view");
+const navPokedex = document.getElementById("nav-pokedex");
+const navEvents = document.getElementById("nav-events");
+
+function eventCardHtml(e, live) {
+  const dateLabel = live
+    ? `Actief t/m ${fmtEventDate(e.end)}`
+    : `${fmtEventDate(e.start)} – ${fmtEventDate(e.end)}`;
+  return `
+    <a class="event-card" href="${e.link}" target="_blank" rel="noopener">
+      <img loading="lazy" src="${e.image}" alt="" onerror="this.style.visibility='hidden'">
+      <div>
+        <div class="ec-name">${live ? '<span class="ec-live">Nu live</span>' : ""}${e.name}</div>
+        <div class="ec-meta">${e.heading} · ${dateLabel}</div>
+      </div>
+    </a>`;
+}
+
+function renderEvents() {
+  detailView.classList.add("hidden");
+  battleView.classList.add("hidden");
+  pickerView.classList.add("hidden");
+  eventsView.classList.remove("hidden");
+  navEvents.classList.add("active");
+  navPokedex.classList.remove("active");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+
+  const statusEl = document.getElementById("events-status");
+  const activeEl = document.getElementById("events-active-list");
+  const upcomingEl = document.getElementById("events-upcoming-list");
+  const upcomingTitle = document.getElementById("events-upcoming-title");
+  statusEl.textContent = "Events laden…";
+  statusEl.classList.remove("hidden");
+  activeEl.innerHTML = "";
+  upcomingEl.innerHTML = "";
+  upcomingTitle.classList.add("hidden");
+
+  loadEvents().then((events) => {
+    if (!events.length) {
+      statusEl.textContent = "Kon de live events niet laden. Bekijk ze rechtstreeks op LeekDuck.com (link hierboven).";
+      return;
+    }
+    const now = Date.now();
+    const active = events.filter((e) => isEventActive(e, now)).sort((a, b) => Date.parse(a.end) - Date.parse(b.end));
+    const upcoming = events
+      .filter((e) => Date.parse(e.start) > now)
+      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+
+    statusEl.textContent = active.length ? "" : "Geen events op dit moment actief.";
+    if (!active.length) statusEl.classList.remove("hidden"); else statusEl.classList.add("hidden");
+
+    activeEl.innerHTML = active.map((e) => eventCardHtml(e, true)).join("");
+    if (upcoming.length) {
+      upcomingTitle.classList.remove("hidden");
+      upcomingEl.innerHTML = upcoming.map((e) => eventCardHtml(e, false)).join("");
+    }
+  });
+}
+
+// ---------------------------------------------------------------------
 // Navigatie via de History API: elke stap (overzicht -> detail ->
-// gevechtsplan) is een eigen history-entry, zodat de terug-swipe op
-// telefoons (en de browser-terugknop) een stap terug doet in de app
-// in plaats van de app/pagina te verlaten.
+// gevechtsplan -> events) is een eigen history-entry, zodat de
+// terug-swipe op telefoons (en de browser-terugknop) een stap terug
+// doet in de app in plaats van de app/pagina te verlaten.
 // ---------------------------------------------------------------------
 function renderPicker() {
   detailView.classList.add("hidden");
   battleView.classList.add("hidden");
+  eventsView.classList.add("hidden");
   pickerView.classList.remove("hidden");
+  navPokedex.classList.add("active");
+  navEvents.classList.remove("active");
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -556,6 +715,7 @@ function applyState(state) {
   if (!state || state.view === "picker") renderPicker();
   else if (state.view === "detail") renderDetail(state.id);
   else if (state.view === "battle") renderBattle(state.candId, state.targetId);
+  else if (state.view === "events") renderEvents();
 }
 
 function showDetail(id) {
@@ -568,11 +728,23 @@ function showBattlePlan(candId, targetId) {
   renderBattle(candId, targetId);
 }
 
+function showEvents() {
+  history.pushState({ view: "events" }, "", "#events");
+  renderEvents();
+}
+
 window.addEventListener("popstate", (e) => applyState(e.state));
 history.replaceState({ view: "picker" }, "", location.pathname + location.search);
 
 battleBackBtn.addEventListener("click", () => history.back());
 backBtn.addEventListener("click", () => history.back());
+navEvents.addEventListener("click", () => { if (!navEvents.classList.contains("active")) showEvents(); });
+navPokedex.addEventListener("click", () => { if (!navPokedex.classList.contains("active")) showDetailOrPicker(); });
+
+function showDetailOrPicker() {
+  history.pushState({ view: "picker" }, "", location.pathname);
+  renderPicker();
+}
 
 searchInput.addEventListener("input", renderGrid);
 

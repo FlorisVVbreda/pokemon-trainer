@@ -1,4 +1,4 @@
-const SHELL_CACHE = "poketrainer-shell-v7-go";
+const SHELL_CACHE = "poketrainer-shell-v8-go";
 const SPRITE_CACHE = "poketrainer-sprites-v2";
 
 const SHELL_FILES = [
@@ -35,6 +35,20 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(event.request.url);
 
   if (event.request.method !== "GET") return;
+
+  // Live events data: always try the network first so events stay current;
+  // only fall back to a cached copy when fully offline.
+  if (url.hostname === "cdn.jsdelivr.net" && url.pathname.includes("ScrapedDuck")) {
+    event.respondWith(
+      fetch(event.request)
+        .then((resp) => {
+          if (resp.ok) caches.open(SPRITE_CACHE).then((c) => c.put(event.request, resp.clone()));
+          return resp;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
 
   // Pokemon sprite artwork: cache-first, store on first view for offline reuse
   if (url.hostname === "cdn.jsdelivr.net") {
