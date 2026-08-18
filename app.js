@@ -9,6 +9,14 @@ const GO_SUPER = 1.6;
 const GO_RESIST = 0.625;
 const GO_STAB = 1.2;
 
+// CP-multiplier per level (index = (level-1)*2), t/m level 51
+const CPM = [0.094,0.135137,0.166398,0.192651,0.215732,0.236573,0.25572,0.27353,0.29025,0.306057,0.321088,0.335445,0.349213,0.362458,0.375236,0.387592,0.399567,0.411194,0.4225,0.432926,0.443108,0.45306,0.462798,0.472336,0.481685,0.490856,0.499858,0.508702,0.517394,0.525943,0.534354,0.542636,0.550793,0.558831,0.566755,0.574569,0.582279,0.589888,0.5974,0.604824,0.612157,0.619404,0.626567,0.633649,0.640653,0.647581,0.654436,0.661219,0.667934,0.674582,0.681165,0.687685,0.694144,0.700543,0.706884,0.713169,0.719399,0.725576,0.7317,0.734741,0.737769,0.740786,0.743789,0.746781,0.749761,0.752729,0.755686,0.75863,0.761564,0.764486,0.767397,0.770297,0.773187,0.776065,0.778933,0.78179,0.784637,0.787474,0.7903,0.792804,0.7953,0.797804,0.8003,0.802804,0.8053,0.807804,0.8103,0.812804,0.8153,0.817804,0.8203,0.822804,0.8253,0.827804,0.8303,0.832804,0.8353,0.837804,0.8403,0.842804,0.8453,0.847804];
+
+function cpAtLevel(level, atk, def, hp, atkIV = 15, defIV = 15, hpIV = 15) {
+  const cpm = CPM[Math.round((level - 1) * 2)];
+  return Math.floor((atk + atkIV) * Math.sqrt(def + defIV) * Math.sqrt(hp + hpIV) * cpm * cpm / 10);
+}
+
 function setFx(atk, defs, mult) {
   const a = TYPES.indexOf(atk);
   for (const d of defs) CHART[a][TYPES.indexOf(d)] = mult;
@@ -360,7 +368,21 @@ function obtainInfo(target) {
   if (target.tags.includes("regional")) {
     lines.push("Regionaal exclusief — spawnt normaal alleen in een bepaald deel van de wereld.");
   }
+  lines.push(
+    "Shiny-kans: standaard ongeveer 1 op 500, tijdens Community Day of shiny-evenementen vaak verhoogd naar zo'n 1 op 25. " +
+    "Dit verschilt per periode en niet elke Pokémon heeft al een shiny-vorm — dit is een algemene richtlijn, geen actueel percentage voor dit moment."
+  );
   return lines;
+}
+
+function hundoRow(target) {
+  const cp20 = cpAtLevel(20, target.atk, target.def, target.hp);
+  const cp25 = cpAtLevel(25, target.atk, target.def, target.hp);
+  return `
+    <div class="info-row"><span>Hundo CP (level 20)</span><b>${cp20}</b></div>
+    <div class="info-row"><span>Hundo CP (weer-boost, level 25)</span><b>${cp25}</b></div>
+    <div class="info-flavor">Komt de CP in het vangscherm exact overeen met een van deze waarden? Dan is de kans groot dat je een 100%-IV ("hundo") te pakken hebt.</div>
+  `;
 }
 
 function ivRow(label, cap, ivs) {
@@ -410,7 +432,8 @@ function renderDetail(id) {
     ivRow("Little League (CP500)", 500, target.ivCp500) +
     ivRow("Great League (CP1500)", 1500, target.ivCp1500) +
     ivRow("Ultra League (CP2500)", 2500, target.ivCp2500) +
-    `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>`;
+    `<div class="info-row"><span>Master League</span><b>Level 50-51 · 15/15/15 IV's</b></div>` +
+    hundoRow(target);
   document.getElementById("location-list").innerHTML = ivHtml;
 
   document.getElementById("own-moves-list").innerHTML = moveGroupsHtml(groupedMoves(target, null, target.atk));
