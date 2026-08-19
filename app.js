@@ -343,6 +343,20 @@ const backBtn = document.getElementById("back-btn");
 
 let activeTypeFilter = null;
 
+// Maakt een niet-native element (div) ook met toetsenbord bedienbaar (Tab + Enter/Spatie) —
+// fijn voor laptop/pc-gebruikers die niet met de muis klikken.
+function makeClickable(el, handler) {
+  el.tabIndex = 0;
+  el.setAttribute("role", "button");
+  el.addEventListener("click", handler);
+  el.addEventListener("keydown", (e) => {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      handler();
+    }
+  });
+}
+
 function typeBadge(i) {
   const span = document.createElement("span");
   span.className = "type-badge";
@@ -390,7 +404,7 @@ function renderGrid() {
     badges.className = "type-badges";
     types.forEach((t) => badges.appendChild(typeBadge(t)));
     card.appendChild(badges);
-    card.addEventListener("click", () => showDetail(id));
+    makeClickable(card, () => showDetail(id));
     frag.appendChild(card);
   }
   grid.appendChild(frag);
@@ -586,7 +600,7 @@ function renderDetail(id) {
       `;
       info.querySelector(".type-badges").append(...cand.types.map(typeBadge));
       card.appendChild(info);
-      card.addEventListener("click", () => showBattlePlan(cand.id, target.id));
+      makeClickable(card, () => showBattlePlan(cand.id, target.id));
       counterList.appendChild(card);
     });
   }
@@ -747,6 +761,13 @@ function showDetailOrPicker() {
 }
 
 searchInput.addEventListener("input", renderGrid);
+
+// Escape gaat een stap terug — fijn voor toetsenbordgebruik op pc/laptop
+window.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && history.state && history.state.view !== "picker") {
+    history.back();
+  }
+});
 
 renderTypeFilters();
 renderGrid();
