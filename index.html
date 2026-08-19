@@ -27,6 +27,8 @@
   <nav class="main-nav">
     <button id="nav-pokedex" class="nav-tab active">Pokédex</button>
     <button id="nav-events" class="nav-tab">📅 Events</button>
+    <button id="nav-raids" class="nav-tab">⚔️ Raids</button>
+    <button id="nav-coords" class="nav-tab">📍 Coords</button>
   </nav>
 </header>
 
@@ -48,6 +50,39 @@
     <div id="events-active-list" class="events-list"></div>
     <h3 id="events-upcoming-title" class="hidden">Binnenkort</h3>
     <div id="events-upcoming-list" class="events-list"></div>
+  </section>
+
+  <section id="raids-view" class="view hidden">
+    <div class="events-header">
+      <h2>Raids</h2>
+      <a href="https://leekduck.com/boss-lineups/" target="_blank" rel="noopener" class="events-external-link">Volledige raid-lineup op LeekDuck.com ↗</a>
+    </div>
+    <div class="panel raid-tips">
+      <h3>Tips voor raids</h3>
+      <ul>
+        <li>Gyms in parken, winkelcentra of het stadscentrum hebben vaak meerdere raids dicht bij elkaar — handig om er meerdere na elkaar te doen.</li>
+        <li>Kerken, standbeelden en andere landmarks zijn vaak Ex-raid-gyms met net wat meer kans op zeldzame raids.</li>
+        <li>Solo een 5-star of Mega-raid halen is meestal niet te doen — spreek af met lokale spelers (Discord/Facebook-groepen per stad) of gebruik een Remote Raid Pass.</li>
+        <li>Check hierboven de Hundo CP van de baas voordat je vangt, en het gevechtsplan-scherm voor de beste tegenstanders.</li>
+      </ul>
+    </div>
+    <div id="raids-status" class="empty-msg">Raids laden…</div>
+    <div id="raids-active-list" class="events-list"></div>
+    <h3 id="raids-upcoming-title" class="hidden">Binnenkort</h3>
+    <div id="raids-upcoming-list" class="events-list"></div>
+  </section>
+
+  <section id="coords-view" class="view hidden">
+    <div class="events-header">
+      <h2>Evenementlocaties</h2>
+      <a href="https://pokemongolive.com/events/" target="_blank" rel="noopener" class="events-external-link">Officiële eventpagina van Niantic ↗</a>
+    </div>
+    <div class="panel raid-tips">
+      <h3>Over deze tab</h3>
+      <p>Hier komen officiële, door Niantic aangekondigde locaties voor fysieke evenementen te staan (zoals GO Fest-steden of Safari Zone-locaties), zodra zo'n evenement gepland staat. Ik heb geen live databron met exacte adressen/coördinaten, dus voor het laatste nieuws en ticketinfo is de officiële Niantic-pagina hierboven altijd leidend.</p>
+    </div>
+    <div id="coords-status" class="empty-msg">Locaties laden…</div>
+    <div id="coords-list" class="events-list"></div>
   </section>
 
   <section id="detail-view" class="view hidden">

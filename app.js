@@ -467,13 +467,7 @@ function renderDetail(id) {
   const raw = byId.get(id);
   const target = poke(raw);
 
-  pickerView.classList.add("hidden");
-  battleView.classList.add("hidden");
-  eventsView.classList.add("hidden");
-  detailView.classList.remove("hidden");
-  navPokedex.classList.add("active");
-  navEvents.classList.remove("active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  showView(detailView, navPokedex);
 
   document.getElementById("target-img").src = spriteUrl(target.spriteId);
   document.getElementById("target-img").onerror = function () {
@@ -613,13 +607,7 @@ function renderBattle(candId, targetId) {
   const cand = poke(byId.get(candId));
   const target = poke(byId.get(targetId));
 
-  detailView.classList.add("hidden");
-  pickerView.classList.add("hidden");
-  eventsView.classList.add("hidden");
-  battleView.classList.remove("hidden");
-  navPokedex.classList.add("active");
-  navEvents.classList.remove("active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  showView(battleView, navPokedex);
 
   document.getElementById("battle-cand-img").src = spriteUrl(cand.spriteId);
   document.getElementById("battle-cand-img").onerror = function () { this.onerror = null; this.src = spriteFallback(cand.spriteId); };
@@ -648,11 +636,27 @@ function renderBattle(candId, targetId) {
 }
 
 // ---------------------------------------------------------------------
-// Events-tab: live kalender (LeekDuck via ScrapedDuck)
+// Events / Raids / Coords-tabs: live kalender (LeekDuck via ScrapedDuck)
 // ---------------------------------------------------------------------
 const eventsView = document.getElementById("events-view");
+const raidsView = document.getElementById("raids-view");
+const coordsView = document.getElementById("coords-view");
 const navPokedex = document.getElementById("nav-pokedex");
 const navEvents = document.getElementById("nav-events");
+const navRaids = document.getElementById("nav-raids");
+const navCoords = document.getElementById("nav-coords");
+
+const ALL_VIEWS = [pickerView, detailView, battleView, eventsView, raidsView, coordsView];
+const NAV_BUTTONS = [navPokedex, navEvents, navRaids, navCoords];
+
+function showView(view, navBtn) {
+  ALL_VIEWS.forEach((v) => v.classList.toggle("hidden", v !== view));
+  NAV_BUTTONS.forEach((b) => b.classList.toggle("active", b === navBtn));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+const RAID_TYPES = new Set(["raid-battles", "raid-hour", "raid-day", "max-battles", "max-mondays"]);
+const VENUE_TYPES = new Set(["pokemon-go-fest", "safari-zone", "go-tour"]);
 
 function eventCardHtml(e, live) {
   const dateLabel = live
@@ -668,15 +672,28 @@ function eventCardHtml(e, live) {
     </a>`;
 }
 
-function renderEvents() {
-  detailView.classList.add("hidden");
-  battleView.classList.add("hidden");
-  pickerView.classList.add("hidden");
-  eventsView.classList.remove("hidden");
-  navEvents.classList.add("active");
-  navPokedex.classList.remove("active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+function renderEventLists(events, { statusEl, activeEl, upcomingEl, upcomingTitle, emptyMsg }) {
+  const now = Date.now();
+  const active = events.filter((e) => isEventActive(e, now)).sort((a, b) => Date.parse(a.end) - Date.parse(b.end));
+  const upcoming = events
+    .filter((e) => Date.parse(e.start) > now)
+    .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
 
+  statusEl.textContent = active.length ? "" : emptyMsg;
+  statusEl.classList.toggle("hidden", active.length > 0);
+
+  activeEl.innerHTML = active.map((e) => eventCardHtml(e, true)).join("");
+  if (upcoming.length) {
+    upcomingTitle.classList.remove("hidden");
+    upcomingEl.innerHTML = upcoming.map((e) => eventCardHtml(e, false)).join("");
+  } else {
+    upcomingTitle.classList.add("hidden");
+    upcomingEl.innerHTML = "";
+  }
+}
+
+function renderEvents() {
+  showView(eventsView, navEvents);
   const statusEl = document.getElementById("events-status");
   const activeEl = document.getElementById("events-active-list");
   const upcomingEl = document.getElementById("events-upcoming-list");
@@ -692,37 +709,62 @@ function renderEvents() {
       statusEl.textContent = "Kon de live events niet laden. Bekijk ze rechtstreeks op LeekDuck.com (link hierboven).";
       return;
     }
-    const now = Date.now();
-    const active = events.filter((e) => isEventActive(e, now)).sort((a, b) => Date.parse(a.end) - Date.parse(b.end));
-    const upcoming = events
-      .filter((e) => Date.parse(e.start) > now)
-      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+    renderEventLists(events, { statusEl, activeEl, upcomingEl, upcomingTitle, emptyMsg: "Geen events op dit moment actief." });
+  });
+}
 
-    statusEl.textContent = active.length ? "" : "Geen events op dit moment actief.";
-    if (!active.length) statusEl.classList.remove("hidden"); else statusEl.classList.add("hidden");
+function renderRaids() {
+  showView(raidsView, navRaids);
+  const statusEl = document.getElementById("raids-status");
+  const activeEl = document.getElementById("raids-active-list");
+  const upcomingEl = document.getElementById("raids-upcoming-list");
+  const upcomingTitle = document.getElementById("raids-upcoming-title");
+  statusEl.textContent = "Raids laden…";
+  statusEl.classList.remove("hidden");
+  activeEl.innerHTML = "";
+  upcomingEl.innerHTML = "";
+  upcomingTitle.classList.add("hidden");
 
-    activeEl.innerHTML = active.map((e) => eventCardHtml(e, true)).join("");
-    if (upcoming.length) {
-      upcomingTitle.classList.remove("hidden");
-      upcomingEl.innerHTML = upcoming.map((e) => eventCardHtml(e, false)).join("");
+  loadEvents().then((events) => {
+    const raidEvents = events.filter((e) => RAID_TYPES.has(e.eventType));
+    if (!raidEvents.length) {
+      statusEl.textContent = "Kon de live raids niet laden. Bekijk de volledige lineup op LeekDuck.com (link hierboven).";
+      return;
     }
+    renderEventLists(raidEvents, { statusEl, activeEl, upcomingEl, upcomingTitle, emptyMsg: "Geen raid-events op dit moment actief." });
+  });
+}
+
+function renderCoords() {
+  showView(coordsView, navCoords);
+  const statusEl = document.getElementById("coords-status");
+  const listEl = document.getElementById("coords-list");
+  statusEl.textContent = "Locaties laden…";
+  statusEl.classList.remove("hidden");
+  listEl.innerHTML = "";
+
+  loadEvents().then((events) => {
+    const venueEvents = events
+      .filter((e) => VENUE_TYPES.has(e.eventType))
+      .sort((a, b) => Date.parse(a.start) - Date.parse(b.start));
+    if (!venueEvents.length) {
+      statusEl.textContent = "Momenteel staat er geen fysiek evenement met een specifieke locatie gepland. Check de officiële Niantic-pagina hierboven voor het laatste nieuws.";
+      return;
+    }
+    statusEl.textContent = "";
+    const now = Date.now();
+    listEl.innerHTML = venueEvents.map((e) => eventCardHtml(e, isEventActive(e, now))).join("");
   });
 }
 
 // ---------------------------------------------------------------------
 // Navigatie via de History API: elke stap (overzicht -> detail ->
-// gevechtsplan -> events) is een eigen history-entry, zodat de
-// terug-swipe op telefoons (en de browser-terugknop) een stap terug
-// doet in de app in plaats van de app/pagina te verlaten.
+// gevechtsplan -> events/raids/coords) is een eigen history-entry,
+// zodat de terug-swipe op telefoons (en de browser-terugknop) een
+// stap terug doet in de app in plaats van de app/pagina te verlaten.
 // ---------------------------------------------------------------------
 function renderPicker() {
-  detailView.classList.add("hidden");
-  battleView.classList.add("hidden");
-  eventsView.classList.add("hidden");
-  pickerView.classList.remove("hidden");
-  navPokedex.classList.add("active");
-  navEvents.classList.remove("active");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  showView(pickerView, navPokedex);
 }
 
 function applyState(state) {
@@ -730,6 +772,8 @@ function applyState(state) {
   else if (state.view === "detail") renderDetail(state.id);
   else if (state.view === "battle") renderBattle(state.candId, state.targetId);
   else if (state.view === "events") renderEvents();
+  else if (state.view === "raids") renderRaids();
+  else if (state.view === "coords") renderCoords();
 }
 
 function showDetail(id) {
@@ -742,9 +786,9 @@ function showBattlePlan(candId, targetId) {
   renderBattle(candId, targetId);
 }
 
-function showEvents() {
-  history.pushState({ view: "events" }, "", "#events");
-  renderEvents();
+function navigateTo(view) {
+  history.pushState({ view }, "", `#${view}`);
+  applyState({ view });
 }
 
 window.addEventListener("popstate", (e) => applyState(e.state));
@@ -752,13 +796,10 @@ history.replaceState({ view: "picker" }, "", location.pathname + location.search
 
 battleBackBtn.addEventListener("click", () => history.back());
 backBtn.addEventListener("click", () => history.back());
-navEvents.addEventListener("click", () => { if (!navEvents.classList.contains("active")) showEvents(); });
-navPokedex.addEventListener("click", () => { if (!navPokedex.classList.contains("active")) showDetailOrPicker(); });
-
-function showDetailOrPicker() {
-  history.pushState({ view: "picker" }, "", location.pathname);
-  renderPicker();
-}
+navPokedex.addEventListener("click", () => { if (!navPokedex.classList.contains("active")) navigateTo("picker"); });
+navEvents.addEventListener("click", () => { if (!navEvents.classList.contains("active")) navigateTo("events"); });
+navRaids.addEventListener("click", () => { if (!navRaids.classList.contains("active")) navigateTo("raids"); });
+navCoords.addEventListener("click", () => { if (!navCoords.classList.contains("active")) navigateTo("coords"); });
 
 searchInput.addEventListener("input", renderGrid);
 
