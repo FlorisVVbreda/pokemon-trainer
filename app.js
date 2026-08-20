@@ -111,7 +111,7 @@ function poke(p) {
     fastNormal: p[7], fastElite: p[8], chargedNormal: p[9], chargedElite: p[10],
     tags: p[11],
     ivCp500: p[12], ivCp1500: p[13], ivCp2500: p[14],
-    parent: p[15], buddyDistance: p[16], spriteId: p[17],
+    parent: p[15], buddyDistance: p[16], spriteId: p[17], children: p[18] || [],
   };
 }
 
@@ -457,6 +457,56 @@ function quickfactsHtml(target) {
   `;
 }
 
+function evolutionRoot(id) {
+  let cur = id;
+  for (let i = 0; i < 10; i++) {
+    const raw = byId.get(cur);
+    if (!raw) break;
+    const p = poke(raw);
+    if (p.parent == null || !byId.get(p.parent)) break;
+    cur = p.parent;
+  }
+  return cur;
+}
+
+function evolutionStages(rootId) {
+  const stages = [];
+  const seen = new Set();
+  let gen = [rootId];
+  while (gen.length) {
+    const stageIds = gen.filter((id) => byId.get(id) && !seen.has(id));
+    if (!stageIds.length) break;
+    stages.push(stageIds);
+    stageIds.forEach((id) => seen.add(id));
+    const next = [];
+    for (const id of stageIds) {
+      for (const childId of poke(byId.get(id)).children) {
+        if (byId.get(childId) && !seen.has(childId)) next.push(childId);
+      }
+    }
+    gen = next;
+  }
+  return stages;
+}
+
+function evolutionLineHtml(target) {
+  if (target.variant) return null; // Mega/Primal-vormen tonen de lijn van hun basisvorm elders
+  const stages = evolutionStages(evolutionRoot(target.id));
+  if (stages.length <= 1 && stages[0].length <= 1) return null;
+  return stages.map((stageIds, i) => {
+    const cards = stageIds.map((id) => {
+      const p = poke(byId.get(id));
+      return `
+        <div class="evo-card${id === target.id ? " current" : ""}" data-id="${id}">
+          <img loading="lazy" src="${spriteUrl(p.spriteId)}" alt="" onerror="this.onerror=null;this.src='${spriteFallback(p.spriteId)}'">
+          <div class="evo-name">${p.name}</div>
+        </div>`;
+    }).join("");
+    const arrow = i < stages.length - 1 ? `<div class="evo-arrow">→</div>` : "";
+    return `<div class="evo-stage">${cards}</div>${arrow}`;
+  }).join("");
+}
+
 function ivRow(label, cap, ivs) {
   if (!ivs) return "";
   const [level, atk, def, hp] = ivs;
@@ -536,6 +586,17 @@ function renderDetail(id) {
   document.getElementById("location-list").innerHTML = ivHtml;
 
   document.getElementById("own-moves-list").innerHTML = moveGroupsHtml(groupedMoves(target, null, target.atk));
+
+  const evoPanel = document.getElementById("evolution-panel");
+  const evoHtml = evolutionLineHtml(target);
+  evoPanel.classList.toggle("hidden", !evoHtml);
+  if (evoHtml) {
+    const evoLine = document.getElementById("evolution-line");
+    evoLine.innerHTML = evoHtml;
+    evoLine.querySelectorAll(".evo-card").forEach((card) => {
+      card.addEventListener("click", () => showDetail(card.dataset.id));
+    });
+  }
 
   const weakList = document.getElementById("weakness-list");
   const weaknesses = weaknessesOf(target);
