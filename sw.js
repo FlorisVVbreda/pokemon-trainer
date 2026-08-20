@@ -1,4 +1,4 @@
-const SHELL_CACHE = "poketrainer-shell-v10-go";
+const SHELL_CACHE = "poketrainer-shell-v11-go";
 const SPRITE_CACHE = "poketrainer-sprites-v2";
 
 const SHELL_FILES = [

@@ -641,17 +641,20 @@ function renderBattle(candId, targetId) {
 const eventsView = document.getElementById("events-view");
 const raidsView = document.getElementById("raids-view");
 const coordsView = document.getElementById("coords-view");
+const clipboardView = document.getElementById("clipboard-view");
 const navPokedex = document.getElementById("nav-pokedex");
 const navEvents = document.getElementById("nav-events");
 const navRaids = document.getElementById("nav-raids");
 const navCoords = document.getElementById("nav-coords");
+const navClipboard = document.getElementById("nav-clipboard");
 
-const ALL_VIEWS = [pickerView, detailView, battleView, eventsView, raidsView, coordsView];
-const NAV_BUTTONS = [navPokedex, navEvents, navRaids, navCoords];
+const ALL_VIEWS = [pickerView, detailView, battleView, eventsView, raidsView, coordsView, clipboardView];
+const NAV_BUTTONS = [navPokedex, navEvents, navRaids, navCoords, navClipboard];
 
 function showView(view, navBtn) {
   ALL_VIEWS.forEach((v) => v.classList.toggle("hidden", v !== view));
   NAV_BUTTONS.forEach((b) => b.classList.toggle("active", b === navBtn));
+  if (view !== clipboardView) clipboardStopPolling();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -758,6 +761,84 @@ function renderCoords() {
 }
 
 // ---------------------------------------------------------------------
+// Klembord-tab: tekst delen tussen je eigen apparaten (laptop <-> telefoon)
+// via een eigen Firebase Realtime Database. Alleen bedoeld voor je eigen
+// apparaten — niet geadverteerd, geen echte toegangscontrole.
+// ---------------------------------------------------------------------
+const CLIPBOARD_URL = "https://pokemon-clipbord-default-rtdb.firebaseio.com/clipboard.json";
+let clipboardPollTimer = null;
+let clipboardLastTs = 0;
+
+function clipboardShowIncoming(data, attemptAutoCopy) {
+  if (!data || !data.text || !data.ts || data.ts === clipboardLastTs) return;
+  clipboardLastTs = data.ts;
+
+  document.getElementById("clipboard-empty").classList.add("hidden");
+  const filled = document.getElementById("clipboard-filled");
+  filled.classList.remove("hidden");
+  document.getElementById("clipboard-text-display").textContent = data.text;
+  document.getElementById("clipboard-copy-status").textContent = "";
+
+  if (attemptAutoCopy && navigator.clipboard && document.hasFocus()) {
+    navigator.clipboard.writeText(data.text).then(() => {
+      document.getElementById("clipboard-copy-status").textContent = "Automatisch gekopieerd ✓";
+    }).catch(() => {});
+  }
+}
+
+function clipboardPoll(attemptAutoCopy) {
+  fetch(CLIPBOARD_URL)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => clipboardShowIncoming(data, attemptAutoCopy))
+    .catch(() => {});
+}
+
+function clipboardStopPolling() {
+  if (clipboardPollTimer) {
+    clearInterval(clipboardPollTimer);
+    clipboardPollTimer = null;
+  }
+}
+
+function renderClipboard() {
+  showView(clipboardView, navClipboard);
+  clipboardPoll(false);
+  clipboardStopPolling();
+  clipboardPollTimer = setInterval(() => clipboardPoll(true), 3000);
+}
+
+document.getElementById("clipboard-send-btn").addEventListener("click", () => {
+  const input = document.getElementById("clipboard-input");
+  const btn = document.getElementById("clipboard-send-btn");
+  const val = input.value.trim();
+  if (!val) return;
+  const original = btn.textContent;
+  fetch(CLIPBOARD_URL, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text: val, ts: Date.now() }),
+  }).then((r) => {
+    if (!r.ok) throw new Error("send failed");
+    btn.textContent = "Verstuurd ✓";
+    input.value = "";
+    setTimeout(() => { btn.textContent = original; }, 1400);
+  }).catch(() => {
+    btn.textContent = "Mislukt — probeer opnieuw";
+    setTimeout(() => { btn.textContent = original; }, 1800);
+  });
+});
+
+document.getElementById("clipboard-copy-btn").addEventListener("click", () => {
+  const val = document.getElementById("clipboard-text-display").textContent;
+  if (!val) return;
+  navigator.clipboard.writeText(val).then(() => {
+    document.getElementById("clipboard-copy-status").textContent = "Gekopieerd naar klembord ✓";
+  }).catch(() => {
+    document.getElementById("clipboard-copy-status").textContent = "Kopiëren mislukt — selecteer de tekst handmatig.";
+  });
+});
+
+// ---------------------------------------------------------------------
 // Navigatie via de History API: elke stap (overzicht -> detail ->
 // gevechtsplan -> events/raids/coords) is een eigen history-entry,
 // zodat de terug-swipe op telefoons (en de browser-terugknop) een
@@ -774,6 +855,7 @@ function applyState(state) {
   else if (state.view === "events") renderEvents();
   else if (state.view === "raids") renderRaids();
   else if (state.view === "coords") renderCoords();
+  else if (state.view === "clipboard") renderClipboard();
 }
 
 function showDetail(id) {
@@ -800,6 +882,7 @@ navPokedex.addEventListener("click", () => { if (!navPokedex.classList.contains(
 navEvents.addEventListener("click", () => { if (!navEvents.classList.contains("active")) navigateTo("events"); });
 navRaids.addEventListener("click", () => { if (!navRaids.classList.contains("active")) navigateTo("raids"); });
 navCoords.addEventListener("click", () => { if (!navCoords.classList.contains("active")) navigateTo("coords"); });
+navClipboard.addEventListener("click", () => { if (!navClipboard.classList.contains("active")) navigateTo("clipboard"); });
 
 searchInput.addEventListener("input", renderGrid);
 

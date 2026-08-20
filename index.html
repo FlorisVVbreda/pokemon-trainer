@@ -29,6 +29,7 @@
     <button id="nav-events" class="nav-tab">📅 Events</button>
     <button id="nav-raids" class="nav-tab">⚔️ Raids</button>
     <button id="nav-coords" class="nav-tab">📍 Coords</button>
+    <button id="nav-clipboard" class="nav-tab">📋 Klembord</button>
   </nav>
 </header>
 
@@ -83,6 +84,30 @@
     </div>
     <div id="coords-status" class="empty-msg">Locaties laden…</div>
     <div id="coords-list" class="events-list"></div>
+  </section>
+
+  <section id="clipboard-view" class="view hidden">
+    <div class="events-header">
+      <h2>Klembord</h2>
+    </div>
+    <p class="clipboard-sub">Open deze tab op je laptop én je telefoon. Wat je hieronder verstuurt, verschijnt automatisch bij het andere apparaat — klaar om te kopiëren.</p>
+
+    <div class="panel clipboard-compose">
+      <label for="clipboard-input">Bericht</label>
+      <textarea id="clipboard-input" rows="3" placeholder="Typ of plak hier iets, bijvoorbeeld een coördinaat…"></textarea>
+      <button id="clipboard-send-btn" type="button">Verstuur naar ander apparaat →</button>
+    </div>
+
+    <div class="panel clipboard-incoming empty" id="clipboard-empty">
+      <p>Nog niets ontvangen.</p>
+    </div>
+
+    <div class="panel clipboard-incoming filled hidden" id="clipboard-filled">
+      <span class="pill">Nieuw</span>
+      <p class="clipboard-text" id="clipboard-text-display"></p>
+      <button id="clipboard-copy-btn" type="button">📋 Tik om te kopiëren</button>
+      <p class="clipboard-copy-status" id="clipboard-copy-status" aria-live="polite"></p>
+    </div>
   </section>
 
   <section id="detail-view" class="view hidden">
