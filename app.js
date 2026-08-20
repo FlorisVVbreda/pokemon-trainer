@@ -642,14 +642,16 @@ const eventsView = document.getElementById("events-view");
 const raidsView = document.getElementById("raids-view");
 const coordsView = document.getElementById("coords-view");
 const clipboardView = document.getElementById("clipboard-view");
+const pvpView = document.getElementById("pvp-view");
 const navPokedex = document.getElementById("nav-pokedex");
 const navEvents = document.getElementById("nav-events");
 const navRaids = document.getElementById("nav-raids");
 const navCoords = document.getElementById("nav-coords");
 const navClipboard = document.getElementById("nav-clipboard");
+const navPvp = document.getElementById("nav-pvp");
 
-const ALL_VIEWS = [pickerView, detailView, battleView, eventsView, raidsView, coordsView, clipboardView];
-const NAV_BUTTONS = [navPokedex, navEvents, navRaids, navCoords, navClipboard];
+const ALL_VIEWS = [pickerView, detailView, battleView, eventsView, raidsView, coordsView, clipboardView, pvpView];
+const NAV_BUTTONS = [navPokedex, navEvents, navRaids, navCoords, navClipboard, navPvp];
 
 function showView(view, navBtn) {
   ALL_VIEWS.forEach((v) => v.classList.toggle("hidden", v !== view));
@@ -761,6 +763,130 @@ function renderCoords() {
 }
 
 // ---------------------------------------------------------------------
+// PvP-tab: rangschikkingen per league (PvPoke's eigen berekende rankings)
+// ---------------------------------------------------------------------
+const LEAGUE_LABEL = { little: "Little League (CP500)", great: "Great League (CP1500)", ultra: "Ultra League (CP2500)", master: "Master League" };
+let pvpDataPromise = null;
+let pvpLeague = "great";
+
+function loadPvpData() {
+  if (!pvpDataPromise) {
+    pvpDataPromise = new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "pvp-data.js";
+      script.onload = () => resolve(typeof PVP_RANKINGS !== "undefined" ? PVP_RANKINGS : null);
+      script.onerror = reject;
+      document.head.appendChild(script);
+    }).catch(() => null);
+  }
+  return pvpDataPromise;
+}
+
+function pvpMoveName(moveId) {
+  if (!moveId) return null;
+  if (moveId.endsWith("_PLUS")) return titleCase(moveId.slice(0, -5).toLowerCase()) + "+";
+  return titleCase(moveId.toLowerCase());
+}
+
+function pvpMoveInfo(cand, moveId) {
+  if (!moveId) return null;
+  const wantName = pvpMoveName(moveId);
+  const groups = [
+    [cand.fastNormal, false], [cand.fastElite, true],
+    [cand.chargedNormal, false], [cand.chargedElite, true],
+  ];
+  for (const [idxs, isElite] of groups) {
+    for (const idx of idxs) {
+      if (MOVES[idx][0] === wantName) return moveInfo(idx, isElite);
+    }
+  }
+  return { name: wantName, type: null };
+}
+
+function pvpMoveChip(m) {
+  if (!m) return "";
+  if (m.type == null) return `<span class="pvp-move-chip">${m.name}</span>`;
+  return `<span class="pvp-move-chip"><span class="mtype" style="background:var(--t-${TYPES[m.type]})"></span>${m.name}${m.elite ? " ⭐" : ""}</span>`;
+}
+
+function pvpRowHtml(entry) {
+  const [sid, rank, score, fastId, c1Id, c2Id] = entry;
+  const raw = byId.get(sid);
+  if (!raw) return "";
+  const cand = poke(raw);
+  const fast = pvpMoveInfo(cand, fastId);
+  const c1 = pvpMoveInfo(cand, c1Id);
+  const c2 = pvpMoveInfo(cand, c2Id);
+  return `
+    <div class="pvp-row" data-id="${sid}">
+      <div class="pvp-rank">#${rank}</div>
+      <img loading="lazy" src="${spriteUrl(cand.spriteId)}" alt="" onerror="this.onerror=null;this.src='${spriteFallback(cand.spriteId)}'">
+      <div>
+        <div class="pvp-row-name">${cand.name} <span class="pvp-score">Score ${score}</span></div>
+        <div class="pvp-moveset">${pvpMoveChip(fast)}${pvpMoveChip(c1)}${pvpMoveChip(c2)}</div>
+      </div>
+    </div>`;
+}
+
+function renderPvpList() {
+  const statusEl = document.getElementById("pvp-status");
+  const listEl = document.getElementById("pvp-list");
+  const query = document.getElementById("pvp-search").value.trim().toLowerCase();
+  const rows = (typeof PVP_RANKINGS !== "undefined" && PVP_RANKINGS[pvpLeague]) || [];
+
+  const withRank = rows.map((r, i) => [r[0], i + 1, r[1], r[2], r[3], r[4]]);
+  let shown = withRank;
+  if (query) {
+    shown = withRank.filter(([sid]) => {
+      const raw = byId.get(sid);
+      const name = raw ? poke(raw).name.toLowerCase() : sid;
+      return name.includes(query) || sid.includes(query);
+    });
+  } else {
+    shown = withRank.slice(0, 50);
+  }
+
+  if (!rows.length) {
+    statusEl.textContent = "Kon de rankings niet laden.";
+    listEl.innerHTML = "";
+    return;
+  }
+  if (!shown.length) {
+    statusEl.textContent = "Geen Pokémon gevonden voor deze zoekopdracht in deze league.";
+    listEl.innerHTML = "";
+    return;
+  }
+  statusEl.textContent = "";
+  listEl.innerHTML = shown.map(pvpRowHtml).join("");
+  listEl.querySelectorAll(".pvp-row").forEach((row) => {
+    row.addEventListener("click", () => showDetail(row.dataset.id));
+  });
+}
+
+function renderPvp() {
+  showView(pvpView, navPvp);
+  document.getElementById("pvp-status").textContent = "Rankings laden…";
+  document.getElementById("pvp-list").innerHTML = "";
+  document.querySelectorAll(".league-tab").forEach((b) => b.classList.toggle("active", b.dataset.league === pvpLeague));
+  loadPvpData().then((data) => {
+    if (!data) {
+      document.getElementById("pvp-status").textContent = "Kon de rankings niet laden.";
+      return;
+    }
+    renderPvpList();
+  });
+}
+
+document.getElementById("league-tabs").addEventListener("click", (e) => {
+  const btn = e.target.closest(".league-tab");
+  if (!btn) return;
+  pvpLeague = btn.dataset.league;
+  document.querySelectorAll(".league-tab").forEach((b) => b.classList.toggle("active", b === btn));
+  renderPvpList();
+});
+document.getElementById("pvp-search").addEventListener("input", renderPvpList);
+
+// ---------------------------------------------------------------------
 // Klembord-tab: tekst delen tussen je eigen apparaten (laptop <-> telefoon)
 // via een eigen Firebase Realtime Database. Alleen bedoeld voor je eigen
 // apparaten — niet geadverteerd, geen echte toegangscontrole.
@@ -856,6 +982,7 @@ function applyState(state) {
   else if (state.view === "raids") renderRaids();
   else if (state.view === "coords") renderCoords();
   else if (state.view === "clipboard") renderClipboard();
+  else if (state.view === "pvp") renderPvp();
 }
 
 function showDetail(id) {
@@ -883,6 +1010,7 @@ navEvents.addEventListener("click", () => { if (!navEvents.classList.contains("a
 navRaids.addEventListener("click", () => { if (!navRaids.classList.contains("active")) navigateTo("raids"); });
 navCoords.addEventListener("click", () => { if (!navCoords.classList.contains("active")) navigateTo("coords"); });
 navClipboard.addEventListener("click", () => { if (!navClipboard.classList.contains("active")) navigateTo("clipboard"); });
+navPvp.addEventListener("click", () => { if (!navPvp.classList.contains("active")) navigateTo("pvp"); });
 
 searchInput.addEventListener("input", renderGrid);
 

@@ -30,6 +30,7 @@
     <button id="nav-raids" class="nav-tab">⚔️ Raids</button>
     <button id="nav-coords" class="nav-tab">📍 Coords</button>
     <button id="nav-clipboard" class="nav-tab">📋 Klembord</button>
+    <button id="nav-pvp" class="nav-tab">🏆 PvP</button>
   </nav>
 </header>
 
@@ -108,6 +109,22 @@
       <button id="clipboard-copy-btn" type="button">📋 Tik om te kopiëren</button>
       <p class="clipboard-copy-status" id="clipboard-copy-status" aria-live="polite"></p>
     </div>
+  </section>
+
+  <section id="pvp-view" class="view hidden">
+    <div class="events-header">
+      <h2>PvP-rangschikking</h2>
+      <a href="https://pvpoke.com/rankings/" target="_blank" rel="noopener" class="events-external-link">Volledige rankings op PvPoke.com ↗</a>
+    </div>
+    <div class="league-tabs" id="league-tabs">
+      <button class="league-tab" data-league="little">Little</button>
+      <button class="league-tab" data-league="great">Great</button>
+      <button class="league-tab" data-league="ultra">Ultra</button>
+      <button class="league-tab" data-league="master">Master</button>
+    </div>
+    <input id="pvp-search" type="search" placeholder="Zoek een Pokémon in deze league…" autocomplete="off">
+    <div id="pvp-status" class="empty-msg">Rankings laden…</div>
+    <div id="pvp-list" class="pvp-list"></div>
   </section>
 
   <section id="detail-view" class="view hidden">
